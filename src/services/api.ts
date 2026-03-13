@@ -62,3 +62,12 @@ export const groupsAPI = {
   sendMessage: (id: number, content: string) =>
     api.post(`/groups/${id}/messages`, { content }),
 };
+
+export const aiAPI = {
+  generatePost: (prompt: string) =>
+    api.post('/ai/generate-post', { prompt }),
+  chat: (messages: { role: string; content: string }[]) =>
+    api.post('/ai/chat', { messages }),
+  suggestComment: (postContent: string) =>
+    api.post('/ai/suggest-comment', { postContent }),
+};

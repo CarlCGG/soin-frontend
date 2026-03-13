@@ -3,14 +3,76 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator
 } from 'react-native';
-import { commentsAPI } from '../services/api';
+import { commentsAPI, aiAPI } from '../services/api';
 import { useUser } from '../store';
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f3f0f8' },
+  originalPost: {
+    backgroundColor: '#fff', padding: 16, marginBottom: 8,
+    borderBottomWidth: 2, borderBottomColor: '#f0f0f0',
+  },
+  postHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  avatar: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: '#6B21A8', justifyContent: 'center', alignItems: 'center',
+  },
+  avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  postAuthor: { fontWeight: 'bold', color: '#333', fontSize: 15, marginLeft: 10 },
+  postContent: { fontSize: 15, color: '#333', lineHeight: 22 },
+  commentList: { flex: 1 },
+  emptyText: { textAlign: 'center', color: '#aaa', marginTop: 32, fontSize: 14 },
+  comment: {
+    backgroundColor: '#fff', marginHorizontal: 8, marginBottom: 6,
+    borderRadius: 12, padding: 12,
+  },
+  commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  smallAvatar: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: '#6B21A8', justifyContent: 'center', alignItems: 'center',
+  },
+  smallAvatarText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  commentAuthor: { fontWeight: 'bold', color: '#333', fontSize: 14, marginLeft: 8 },
+  commentTime: { fontSize: 11, color: '#aaa', marginLeft: 8 },
+  deleteText: { color: '#ff4444', fontSize: 12 },
+  commentContent: { fontSize: 14, color: '#333', marginLeft: 40 },
+  suggestBox: {
+    backgroundColor: '#fff', padding: 12,
+    borderTopWidth: 1, borderTopColor: '#eee',
+  },
+  suggestButton: {
+    backgroundColor: '#6B21A8', borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 16,
+    alignSelf: 'flex-start', marginBottom: 8,
+  },
+  suggestButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
+  suggestionItem: {
+    backgroundColor: '#f3f0f8', borderRadius: 12,
+    padding: 10, marginBottom: 6,
+  },
+  suggestionText: { color: '#333', fontSize: 13 },
+  inputBox: {
+    flexDirection: 'row', padding: 12, backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center', gap: 8,
+  },
+  input: {
+    flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8, fontSize: 14,
+  },
+  sendButton: {
+    backgroundColor: '#F97316', borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 16,
+  },
+  sendButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+});
 
 export default function CommentsScreen({ route }: any) {
   const { postId, postContent, postAuthor } = route.params;
   const [comments, setComments] = useState<any[]>([]);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
   const user = useUser();
 
   const loadComments = async () => {
@@ -36,11 +98,26 @@ export default function CommentsScreen({ route }: any) {
     }
   };
 
+  const handleSuggest = async () => {
+    setSuggestLoading(true);
+    try {
+      const res = await aiAPI.suggestComment(postContent);
+      const lines = res.data.content
+      .split('\n')
+      .filter((line: string) => /^\d+\./.test(line.trim()))
+      .slice(0, 3);
+      setSuggestions(lines);
+    } catch (e) {
+      Alert.alert('错误', 'AI 建议失败');
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
+
   useEffect(() => { loadComments(); }, []);
 
   return (
     <View style={styles.container}>
-      {/* 原帖内容 */}
       <View style={styles.originalPost}>
         <View style={styles.postHeader}>
           <View style={styles.avatar}>
@@ -53,7 +130,6 @@ export default function CommentsScreen({ route }: any) {
         <Text style={styles.postContent}>{postContent}</Text>
       </View>
 
-      {/* 评论列表 */}
       <FlatList
         data={comments}
         keyExtractor={(item) => item.id.toString()}
@@ -89,7 +165,20 @@ export default function CommentsScreen({ route }: any) {
         )}
       />
 
-      {/* 评论输入框 */}
+      <View style={styles.suggestBox}>
+        <TouchableOpacity style={styles.suggestButton} onPress={handleSuggest} disabled={suggestLoading}>
+          {suggestLoading
+            ? <ActivityIndicator color="#fff" size="small" />
+            : <Text style={styles.suggestButtonText}>🤖 AI 评论建议</Text>
+          }
+        </TouchableOpacity>
+        {suggestions.map((s, i) => (
+          <TouchableOpacity key={i} style={styles.suggestionItem} onPress={() => setContent(s.replace(/^\d+\.\s*/, ''))}>
+            <Text style={styles.suggestionText}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <View style={styles.inputBox}>
         <View style={styles.smallAvatar}>
           <Text style={styles.smallAvatarText}>
@@ -113,48 +202,3 @@ export default function CommentsScreen({ route }: any) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f3f0f8' },
-  originalPost: {
-    backgroundColor: '#fff', padding: 16, marginBottom: 8,
-    borderBottomWidth: 2, borderBottomColor: '#f0f0f0',
-  },
-  postHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  avatar: {
-    width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#6B21A8', justifyContent: 'center', alignItems: 'center',
-  },
-  avatarText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  postAuthor: { fontWeight: 'bold', color: '#333', fontSize: 15, marginLeft: 10 },
-  postContent: { fontSize: 15, color: '#333', lineHeight: 22 },
-  commentList: { flex: 1 },
-  emptyText: { textAlign: 'center', color: '#aaa', marginTop: 32, fontSize: 14 },
-  comment: {
-    backgroundColor: '#fff', marginHorizontal: 8, marginBottom: 6,
-    borderRadius: 12, padding: 12,
-  },
-  commentHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  smallAvatar: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#6B21A8', justifyContent: 'center', alignItems: 'center',
-  },
-  smallAvatarText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  commentAuthor: { fontWeight: 'bold', color: '#333', fontSize: 14, marginLeft: 8 },
-  commentTime: { fontSize: 11, color: '#aaa', marginLeft: 8 },
-  deleteText: { color: '#ff4444', fontSize: 12 },
-  commentContent: { fontSize: 14, color: '#333', marginLeft: 40 },
-  inputBox: {
-    flexDirection: 'row', padding: 12, backgroundColor: '#fff',
-    borderTopWidth: 1, borderTopColor: '#eee', alignItems: 'center', gap: 8,
-  },
-  input: {
-    flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 8, fontSize: 14,
-  },
-  sendButton: {
-    backgroundColor: '#F97316', borderRadius: 20,
-    paddingVertical: 8, paddingHorizontal: 16,
-  },
-  sendButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-});

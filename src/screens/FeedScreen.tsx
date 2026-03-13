@@ -7,6 +7,7 @@ import {
 import { postsAPI, groupsAPI } from '../services/api';
 import { useUser } from '../store';
 import { useNavigation } from '@react-navigation/native';
+import { aiAPI } from '../services/api';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
@@ -113,6 +114,25 @@ const styles = StyleSheet.create({
     borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16,
   },
   closeButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+
+  aiBox: {
+  flexDirection: 'row', marginBottom: 8, gap: 8, alignItems: 'center',
+  },
+  aiInput: {
+    flex: 1, borderWidth: 1, borderColor: '#6B21A8', borderRadius: 12,
+    padding: 10, fontSize: 14,
+  },
+  aiGenerateButton: {
+    backgroundColor: '#6B21A8', borderRadius: 12,
+    paddingVertical: 10, paddingHorizontal: 16,
+  },
+  aiGenerateButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  aiButton: {
+    backgroundColor: '#f3f0f8', borderRadius: 20,
+    paddingVertical: 8, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: '#6B21A8',
+  },
+  aiButtonText: { color: '#6B21A8', fontSize: 13, fontWeight: '600' },
 });
 
 export default function FeedScreen() {
@@ -123,6 +143,9 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [groups, setGroups] = useState<any[]>([]);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAiInput, setShowAiInput] = useState(false);
   const user = useUser();
   const navigation = useNavigation<any>();
 
@@ -156,6 +179,21 @@ export default function FeedScreen() {
       Alert.alert('错误', '发帖失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAiGenerate = async () => {
+  if (!aiPrompt) return;
+  setAiLoading(true);
+  try {
+    const res = await aiAPI.generatePost(aiPrompt);
+    setContent(res.data.content);
+    setShowAiInput(false);
+    setAiPrompt('');
+    } catch (e) {
+      Alert.alert('错误', 'AI 生成失败');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -268,6 +306,22 @@ export default function FeedScreen() {
                 </View>
                 <Text style={styles.postBoxName}>{user?.username || '用户'}</Text>
               </View>
+              {showAiInput && (
+                <View style={styles.aiBox}>
+                  <TextInput
+                    style={styles.aiInput}
+                    placeholder="描述你想发什么，AI 帮你写..."
+                    value={aiPrompt}
+                    onChangeText={setAiPrompt}
+                  />
+                  <TouchableOpacity style={styles.aiGenerateButton} onPress={handleAiGenerate} disabled={aiLoading}>
+                    {aiLoading
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={styles.aiGenerateButtonText}>生成</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              )}
               <TextInput
                 style={styles.input}
                 placeholder="Write and Share Your Post With Your Connections..."
@@ -290,6 +344,12 @@ export default function FeedScreen() {
               <View style={styles.postBoxFooter}>
                 <TouchableOpacity style={styles.mediaButton} onPress={handlePickImage}>
                   <Text style={styles.mediaButtonText}>📷 Photos/Videos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.aiButton}
+                  onPress={() => setShowAiInput(!showAiInput)}
+                >
+                  <Text style={styles.aiButtonText}>🤖 AI</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.pollButton}>
                   <Text style={styles.pollButtonText}>📊 Polls</Text>
