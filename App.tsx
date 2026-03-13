@@ -12,6 +12,7 @@ import CommentsScreen from './src/screens/CommentsScreen';
 import { useUser } from './src/store';
 import GroupScreen from './src/screens/GroupScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import AiChatScreen from './src/screens/AiChatScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -84,6 +85,14 @@ function MainTabs() {
           tabBarIcon: () => <Text style={{ fontSize: 22 }}>👤</Text>,
         }}
       />
+      <Tab.Screen
+        name="AiChat"
+        component={AiChatScreen}
+        options={{
+          title: 'AI',
+          tabBarIcon: () => <Text style={{ fontSize: 22 }}>🤖</Text>,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -115,6 +124,13 @@ export default function App() {
             title: '群组',
             headerStyle: { backgroundColor: '#6B21A8' },
             headerTintColor: '#fff',
+          }}
+        />
+        <Stack.Screen
+          name="AiChat"
+          component={AiChatScreen}
+          options={{
+            headerShown: false,
           }}
         />
         <Stack.Screen
