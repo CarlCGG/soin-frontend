@@ -55,6 +55,7 @@ export const commentsAPI = {
 export const groupsAPI = {
   getAll: () => api.get('/groups'),
   getById: (id: number) => api.get(`/groups/${id}`),
+  delete: (id: number) => api.delete(`/groups/${id}`),
   create: (name: string, description: string, category: string, location: string) =>
     api.post('/groups', { name, description, category, location }),
   join: (id: number) => api.post(`/groups/${id}/join`),
@@ -70,4 +71,16 @@ export const aiAPI = {
     api.post('/ai/chat', { messages }),
   suggestComment: (postContent: string) =>
     api.post('/ai/suggest-comment', { postContent }),
+};
+
+export const usersAPI = {
+  getProfile: () => api.get('/users/profile'),
+  updateProfile: (bio: string) => api.put('/users/profile', { bio }),
+};
+
+export const eventsAPI = {
+  getAll: () => api.get('/events'),
+  create: (data: any) => api.post('/events', data),
+  attend: (id: number) => api.post(`/events/${id}/attend`),
+  delete: (id: number) => api.delete(`/events/${id}`),
 };

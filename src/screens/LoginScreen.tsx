@@ -21,7 +21,7 @@ export default function LoginScreen({ navigation }: any) {
       const res = await authAPI.login(email, password);
       setAuthToken(res.data.token);
       setUser(res.data.user);
-      navigation.replace('Main');
+      navigation.replace('MainApp');
     } catch (e) {
       Alert.alert('登录失败', '邮箱或密码错误');
     } finally {
