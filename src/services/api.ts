@@ -84,3 +84,21 @@ export const eventsAPI = {
   attend: (id: number) => api.post(`/events/${id}/attend`),
   delete: (id: number) => api.delete(`/events/${id}`),
 };
+
+export const searchAPI = {
+  search: (query: string) => api.get(`/search?q=${encodeURIComponent(query)}`),
+};
+
+export const notificationsAPI = {
+  getAll: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAllRead: () => api.put('/notifications/mark-read'),
+};
+
+export const businessesAPI = {
+  getAll: () => api.get('/businesses'),
+  getMy: () => api.get('/businesses/my'),
+  create: (data: any) => api.post('/businesses', data),
+  follow: (id: number) => api.post(`/businesses/${id}/follow`),
+  delete: (id: number) => api.delete(`/businesses/${id}`),
+};

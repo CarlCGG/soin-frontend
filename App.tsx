@@ -15,6 +15,9 @@ import AiChatScreen from './src/screens/AiChatScreen';
 import GroupHubScreen from './src/screens/GroupHubScreen';
 import { useUser } from './src/store';
 import EventsScreen from './src/screens/EventsScreen';
+import SearchScreen from './src/screens/SearchScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import BusinessesScreen from './src/screens/BusinessesScreen';
 
 const Stack = createStackNavigator();
 const DRAWER_WIDTH = 260;
@@ -26,6 +29,9 @@ const SCREENS: any = {
   AiChat: AiChatScreen,
   GroupHub: GroupHubScreen,
   Events: EventsScreen,
+  Search: SearchScreen,
+  Notifications: NotificationsScreen,
+  Businesses: BusinessesScreen,
 };
 
 function DrawerMenu({ visible, onClose, onNavigate }: {
@@ -36,11 +42,15 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
   const user = useUser();
   const menuItems = [
     { icon: '🏠', label: 'Feed', screen: 'Feed' },
+    { icon: '🔍', label: 'Search', screen: 'Search' },
     { icon: '👥', label: 'Group Hub', screen: 'GroupHub' },
     { icon: '💬', label: 'Messages', screen: 'Messages' },
     { icon: '🤖', label: 'AI Assistant', screen: 'AiChat' },
     { icon: '👤', label: 'My Profile', screen: 'Profile' },
     { icon: '📅', label: 'Events', screen: 'Events' },
+    { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
+    { icon: '🏢', label: 'Businesses', screen: 'Businesses' },
+    
   ];
 
   return (
@@ -104,6 +114,9 @@ const TITLES: any = {
   AiChat: 'AI Assistant',
   GroupHub: 'Group Hub',
   Events: 'Events',
+  Search: 'Search',
+  Notifications: 'Notifications',
+  Businesses: 'Businesses',
 };
 
 function MainApp() {
