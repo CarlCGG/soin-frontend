@@ -18,6 +18,9 @@ import EventsScreen from './src/screens/EventsScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import BusinessesScreen from './src/screens/BusinessesScreen';
+import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import ResourcesScreen from './src/screens/ResourcesScreen';
+import SharedAssetsScreen from './src/screens/SharedAssetsScreen';
 
 const Stack = createStackNavigator();
 const DRAWER_WIDTH = 260;
@@ -32,6 +35,9 @@ const SCREENS: any = {
   Search: SearchScreen,
   Notifications: NotificationsScreen,
   Businesses: BusinessesScreen,
+  Analytics: AnalyticsScreen,
+  Resources: ResourcesScreen,
+  SharedAssets: SharedAssetsScreen,
 };
 
 function DrawerMenu({ visible, onClose, onNavigate }: {
@@ -50,6 +56,9 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
     { icon: '📅', label: 'Events', screen: 'Events' },
     { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
     { icon: '🏢', label: 'Businesses', screen: 'Businesses' },
+    { icon: '📊', label: 'Analytics', screen: 'Analytics' },
+    { icon: '📚', label: 'Resources', screen: 'Resources' },
+    { icon: '📦', label: 'Shared Assets', screen: 'SharedAssets' },
     
   ];
 
@@ -117,6 +126,9 @@ const TITLES: any = {
   Search: 'Search',
   Notifications: 'Notifications',
   Businesses: 'Businesses',
+  Analytics: 'Analytics',
+  Resources: 'Resources',
+  SharedAssets: 'Shared Assets',
 };
 
 function MainApp() {

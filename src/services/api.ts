@@ -102,3 +102,20 @@ export const businessesAPI = {
   follow: (id: number) => api.post(`/businesses/${id}/follow`),
   delete: (id: number) => api.delete(`/businesses/${id}`),
 };
+
+export const analyticsAPI = {
+  get: () => api.get('/analytics'),
+};
+
+export const resourcesAPI = {
+  getAll: (type?: string) => api.get(`/resources${type ? `?type=${type}` : ''}`),
+  create: (data: any) => api.post('/resources', data),
+  delete: (id: number) => api.delete(`/resources/${id}`),
+};
+
+export const assetsAPI = {
+  getAll: (type?: string) => api.get(`/assets${type ? `?type=${type}` : ''}`),
+  getMy: () => api.get('/assets/my'),
+  create: (data: any) => api.post('/assets', data),
+  delete: (id: number) => api.delete(`/assets/${id}`),
+};
