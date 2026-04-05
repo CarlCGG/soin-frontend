@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   grid: { paddingHorizontal: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   card: {
     backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden',
-    width: '31%',
+    width: '47%',
     shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
     marginBottom: 0,
   },
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   errorText: { color: 'red', fontSize: 13, marginBottom: 10 },
   modalInput: {
     borderWidth: 1, borderColor: '#eee', borderRadius: 12,
-    padding: 12, fontSize: 14, marginBottom: 10,
+    padding: 12, fontSize: 14, marginBottom: 10, color: '#333',
   },
   typeLabel: { color: '#888', fontSize: 13, marginBottom: 6 },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
@@ -248,11 +248,12 @@ export default function ResourcesScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Upload Resource</Text>
             {errorMsg ? <Text style={styles.errorText}>⚠️ {errorMsg}</Text> : null}
-            <TextInput style={styles.modalInput} placeholder="Title *" value={title} onChangeText={setTitle} />
-            <TextInput style={styles.modalInput} placeholder="Description (optional)" value={description} onChangeText={setDescription} multiline />
+            <TextInput style={styles.modalInput} placeholder="Title *" placeholderTextColor="#aaa" value={title} onChangeText={setTitle} />
+            <TextInput style={styles.modalInput} placeholder="Description (optional)" placeholderTextColor="#aaa" value={description} onChangeText={setDescription} multiline />
             <TextInput
               style={styles.modalInput}
               placeholder="URL *"
+              placeholderTextColor="#aaa"
               value={url}
               onChangeText={(text) => {
                 setUrl(text);

@@ -19,7 +19,7 @@ export default function ChatScreen({ route }: any) {
       const res = await messagesAPI.getConversation(userId);
       setMessages(res.data);
     } catch (e) {
-      console.log('无法加载消息');
+    console.log('Failed to load messages');
     }
   };
 
@@ -31,7 +31,7 @@ export default function ChatScreen({ route }: any) {
       setContent('');
       loadMessages();
     } catch (e) {
-      console.log('发送失败');
+      console.log('Failed to send');
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export default function ChatScreen({ route }: any) {
         style={styles.messageList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>暂无消息，来打个招呼吧！</Text>
+          <Text style={styles.emptyText}>No messages yet. Say hello!</Text>
         }
         renderItem={({ item }) => {
           const isMe = item.sender.id === user?.id;
@@ -81,7 +81,7 @@ export default function ChatScreen({ route }: any) {
       <View style={styles.inputBox}>
         <TextInput
           style={styles.input}
-          placeholder="发送消息..."
+          placeholder="Send a message..."
           value={content}
           onChangeText={setContent}
           multiline
@@ -89,7 +89,7 @@ export default function ChatScreen({ route }: any) {
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading}>
           {loading
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.sendButtonText}>发送</Text>
+            : <Text style={styles.sendButtonText}>send</Text>
           }
         </TouchableOpacity>
       </View>

@@ -80,7 +80,7 @@ export default function CommentsScreen({ route }: any) {
       const res = await commentsAPI.get(postId);
       setComments(res.data);
     } catch (e) {
-      Alert.alert('错误', '无法加载评论');
+      Alert.alert('Error', 'Failed to load comments');
     }
   };
 
@@ -92,7 +92,7 @@ export default function CommentsScreen({ route }: any) {
       setContent('');
       loadComments();
     } catch (e) {
-      Alert.alert('错误', '评论失败');
+      Alert.alert('Error', 'Failed to post comment');
     } finally {
       setLoading(false);
     }
@@ -103,12 +103,12 @@ export default function CommentsScreen({ route }: any) {
     try {
       const res = await aiAPI.suggestComment(postContent);
       const lines = res.data.content
-      .split('\n')
-      .filter((line: string) => /^\d+\./.test(line.trim()))
-      .slice(0, 3);
+        .split('\n')
+        .filter((line: string) => /^\d+\./.test(line.trim()))
+        .slice(0, 3);
       setSuggestions(lines);
     } catch (e) {
-      Alert.alert('错误', 'AI 建议失败');
+      Alert.alert('Error', 'AI suggestion failed');
     } finally {
       setSuggestLoading(false);
     }
@@ -135,7 +135,7 @@ export default function CommentsScreen({ route }: any) {
         keyExtractor={(item) => item.id.toString()}
         style={styles.commentList}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>暂无评论，来发表第一条评论吧！</Text>
+          <Text style={styles.emptyText}>No comments yet. Be the first to comment!</Text>
         }
         renderItem={({ item }) => (
           <View style={styles.comment}>
@@ -156,7 +156,7 @@ export default function CommentsScreen({ route }: any) {
                   await commentsAPI.delete(item.id);
                   loadComments();
                 }}>
-                  <Text style={styles.deleteText}>删除</Text>
+                  <Text style={styles.deleteText}>Delete</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -169,7 +169,7 @@ export default function CommentsScreen({ route }: any) {
         <TouchableOpacity style={styles.suggestButton} onPress={handleSuggest} disabled={suggestLoading}>
           {suggestLoading
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.suggestButtonText}>🤖 AI 评论建议</Text>
+            : <Text style={styles.suggestButtonText}>🤖 AI Comment Suggestions</Text>
           }
         </TouchableOpacity>
         {suggestions.map((s, i) => (
@@ -187,7 +187,7 @@ export default function CommentsScreen({ route }: any) {
         </View>
         <TextInput
           style={styles.input}
-          placeholder="写下你的评论..."
+          placeholder="Write a comment..."
           value={content}
           onChangeText={setContent}
           multiline
@@ -195,7 +195,7 @@ export default function CommentsScreen({ route }: any) {
         <TouchableOpacity style={styles.sendButton} onPress={handleComment} disabled={loading}>
           {loading
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.sendButtonText}>发送</Text>
+            : <Text style={styles.sendButtonText}>Send</Text>
           }
         </TouchableOpacity>
       </View>

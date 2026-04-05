@@ -14,7 +14,7 @@ export default function RegisterScreen({ navigation }: any) {
 
   const handleRegister = async () => {
     if (!email || !username || !password) {
-      Alert.alert('错误', '请填写所有字段');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     setLoading(true);
@@ -24,7 +24,7 @@ export default function RegisterScreen({ navigation }: any) {
       setUser(res.data.user);
       navigation.replace('Main');
     } catch (e) {
-      Alert.alert('注册失败', '该邮箱或用户名已被使用');
+      Alert.alert('Registration Failed', 'This email or username is already taken');
     } finally {
       setLoading(false);
     }
@@ -33,11 +33,11 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SOIN</Text>
-      <Text style={styles.subtitle}>创建账号</Text>
+      <Text style={styles.subtitle}>Create an account</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="邮箱"
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -45,25 +45,25 @@ export default function RegisterScreen({ navigation }: any) {
       />
       <TextInput
         style={styles.input}
-        placeholder="用户名"
+        placeholder="Username"
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
       />
       <TextInput
         style={styles.input}
-        placeholder="密码"
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
       <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>注册</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>已有账号？立即登录</Text>
+        <Text style={styles.link}>Already have an account? Log in</Text>
       </TouchableOpacity>
     </View>
   );

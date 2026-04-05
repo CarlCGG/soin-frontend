@@ -108,7 +108,7 @@ export default function GroupHubScreen() {
       const res = await groupsAPI.getAll();
       setGroups(res.data);
     } catch (e) {
-      console.log('加载失败');
+      console.log('Failed to load groups');
     } finally {
       setLoading(false);
     }

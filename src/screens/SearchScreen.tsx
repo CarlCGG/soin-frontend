@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, ScrollView
-} from 'react-native';
-import { searchAPI } from '../services/api';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { searchAPI, connectionsAPI } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 
 const styles = StyleSheet.create({
@@ -108,17 +105,30 @@ export default function SearchScreen() {
           {results.users?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>👤 Users ({results.users.length})</Text>
-              {results.users.map((user: any) => (
-                <View key={user.id} style={styles.card}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View style={styles.cardInfo}>
-                    <Text style={styles.cardTitle}>{user.username}</Text>
-                    {user.bio ? <Text style={styles.cardSub}>{user.bio}</Text> : null}
-                  </View>
+             {results.users.map((user: any) => (
+              <View key={user.id} style={styles.card}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
                 </View>
-              ))}
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardTitle}>{user.username}</Text>
+                  {user.bio ? <Text style={styles.cardSub}>{user.bio}</Text> : null}
+                </View>
+                <TouchableOpacity
+                  style={styles.cardAction}
+                  onPress={async () => {
+                    try {
+                      await connectionsAPI.sendRequest(user.id);
+                      Alert.alert('Sent', `Connection request sent to ${user.username}`);
+                    } catch (e) {
+                      Alert.alert('Error', 'Could not send request');
+                    }
+                  }}
+                >
+                  <Text style={styles.cardActionText}>+ Connect</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
             </View>
           )}
 

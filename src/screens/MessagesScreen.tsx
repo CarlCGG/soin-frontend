@@ -20,18 +20,15 @@ export default function MessagesScreen() {
       ]);
       setConversations(convRes.data);
       setUsers(usersRes.data);
-    } catch (e) {
-      // 静默处理错误，不影响界面
-    } finally {
+    } catch (e) {}
+    finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(() => {
-      loadData();
-    }, 3000);
+    const interval = setInterval(() => { loadData(); }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -39,9 +36,8 @@ export default function MessagesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 可发起对话的用户列表 */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>所有用户</Text>
+        <Text style={styles.sectionTitle}>All Users</Text>
         <FlatList
           horizontal
           data={users}
@@ -50,15 +46,10 @@ export default function MessagesScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.userItem}
-              onPress={() => navigation.navigate('Chat', {
-                userId: item.id,
-                username: item.username,
-              })}
+              onPress={() => navigation.navigate('Chat', { userId: item.id, username: item.username })}
             >
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {item.username.charAt(0).toUpperCase()}
-                </Text>
+                <Text style={styles.avatarText}>{item.username.charAt(0).toUpperCase()}</Text>
               </View>
               <Text style={styles.username}>{item.username}</Text>
             </TouchableOpacity>
@@ -66,34 +57,26 @@ export default function MessagesScreen() {
         />
       </View>
 
-      {/* 对话列表 */}
-      <Text style={styles.sectionTitle2}>最近对话</Text>
+      <Text style={styles.sectionTitle2}>Recent Conversations</Text>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.user.id.toString()}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>暂无对话，点击上方用户开始聊天！</Text>
+          <Text style={styles.emptyText}>No conversations yet. Tap a user above to start chatting!</Text>
         }
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.conversationItem}
-            onPress={() => navigation.navigate('Chat', {
-              userId: item.user.id,
-              username: item.user.username,
-            })}
+            onPress={() => navigation.navigate('Chat', { userId: item.user.id, username: item.user.username })}
           >
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {item.user.username.charAt(0).toUpperCase()}
-              </Text>
+              <Text style={styles.avatarText}>{item.user.username.charAt(0).toUpperCase()}</Text>
             </View>
             <View style={styles.conversationInfo}>
               <Text style={styles.conversationName}>{item.user.username}</Text>
               <Text style={styles.lastMessage} numberOfLines={1}>{item.lastMessage}</Text>
             </View>
-            <Text style={styles.time}>
-              {new Date(item.createdAt).toLocaleTimeString()}
-            </Text>
+            <Text style={styles.time}>{new Date(item.createdAt).toLocaleTimeString()}</Text>
           </TouchableOpacity>
         )}
       />

@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, ActivityIndicator
 } from 'react-native';
-import { notificationsAPI } from '../services/api';
+import { notificationsAPI, connectionsAPI } from '../services/api';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
@@ -45,6 +45,7 @@ const getIcon = (type: string) => {
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
   const loadNotifications = async () => {
     try {
@@ -57,6 +58,13 @@ export default function NotificationsScreen() {
     }
   };
 
+  const loadPending = async () => {
+  try {
+    const res = await connectionsAPI.getPending();
+    setPendingRequests(res.data);
+  } catch (e) {}
+};
+
   const handleMarkAllRead = async () => {
     try {
       await notificationsAPI.markAllRead();
@@ -66,12 +74,39 @@ export default function NotificationsScreen() {
     }
   };
 
-  useEffect(() => { loadNotifications(); }, []);
+useEffect(() => { loadNotifications(); loadPending(); }, []);
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color="#6B21A8" />;
 
   return (
     <View style={styles.container}>
+      {pendingRequests.length > 0 && (
+      <View style={{ backgroundColor: '#fff', marginHorizontal: 12, marginTop: 8, borderRadius: 12, padding: 14 }}>
+        <Text style={{ fontWeight: 'bold', color: '#333', marginBottom: 8 }}>
+          👥 Connection Requests ({pendingRequests.length})
+        </Text>
+        {pendingRequests.map((req: any) => (
+          <View key={req.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#6B21A8', justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>{req.fromUser.username.charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text style={{ flex: 1, color: '#333', fontSize: 14 }}>{req.fromUser.username} wants to connect</Text>
+            <TouchableOpacity
+              onPress={async () => { await connectionsAPI.respond(req.id, true); loadPending(); }}
+              style={{ backgroundColor: '#6B21A8', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10, marginRight: 6 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={async () => { await connectionsAPI.respond(req.id, false); loadPending(); }}
+              style={{ backgroundColor: '#f3f0f8', borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10, borderWidth: 1, borderColor: '#ddd' }}
+            >
+              <Text style={{ color: '#888', fontSize: 12 }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+    )}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           🔔 Notifications ({notifications.filter(n => !n.read).length} unread)

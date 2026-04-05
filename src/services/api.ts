@@ -1,25 +1,27 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'http://172.20.10.5:3000';
 
 export const api = axios.create({
   baseURL: API_URL,
 });
 
-// 启动时从 localStorage 读取 token
-const savedToken = localStorage.getItem('auth_token');
-if (savedToken) {
-  api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
-}
+// 启动时从 AsyncStorage 读取 token
+AsyncStorage.getItem('auth_token').then(savedToken => {
+  if (savedToken) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+  }
+});
 
 export const setAuthToken = (token: string) => {
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  localStorage.setItem('auth_token', token);
+  AsyncStorage.setItem('auth_token', token);
 };
 
 export const clearAuthToken = () => {
   delete api.defaults.headers.common['Authorization'];
-  localStorage.removeItem('auth_token');
+  AsyncStorage.removeItem('auth_token');
 };
 
 export const authAPI = {
@@ -31,8 +33,8 @@ export const authAPI = {
 
 export const postsAPI = {
   getAll: () => api.get('/posts'),
-  create: (content: string, imageUrl?: string) =>
-    api.post('/posts', { content, imageUrl }),
+  create: (content: string, imageUrl?: string, visibility?: string) =>
+    api.post('/posts', { content, imageUrl, visibility }),
   delete: (id: number) => api.delete(`/posts/${id}`),
   like: (id: number) => api.post(`/posts/${id}/like`),
 };
@@ -73,10 +75,6 @@ export const aiAPI = {
     api.post('/ai/suggest-comment', { postContent }),
 };
 
-export const usersAPI = {
-  getProfile: () => api.get('/users/profile'),
-  updateProfile: (bio: string) => api.put('/users/profile', { bio }),
-};
 
 export const eventsAPI = {
   getAll: () => api.get('/events'),
@@ -118,4 +116,20 @@ export const assetsAPI = {
   getMy: () => api.get('/assets/my'),
   create: (data: any) => api.post('/assets', data),
   delete: (id: number) => api.delete(`/assets/${id}`),
+};
+
+export const connectionsAPI = {
+  sendRequest: (toUserId: number) => api.post(`/connections/request/${toUserId}`),
+  respond: (connectionId: number, accept: boolean) => api.post(`/connections/respond/${connectionId}`, { accept }),
+  getAll: () => api.get('/connections'),
+  getPending: () => api.get('/connections/pending'),
+  getStatus: (toUserId: number) => api.get(`/connections/status/${toUserId}`),
+  remove: (otherUserId: number) => api.delete(`/connections/remove/${otherUserId}`),
+};
+
+export const usersAPI = {
+  getProfile: () => api.get('/users/profile'),
+  updateProfile: (data: any) => api.put('/users/profile', data),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.put('/users/change-password', { currentPassword, newPassword }),
 };

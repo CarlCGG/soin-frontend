@@ -13,7 +13,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('错误', '请填写所有字段');
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     setLoading(true);
@@ -23,7 +23,7 @@ export default function LoginScreen({ navigation }: any) {
       setUser(res.data.user);
       navigation.replace('MainApp');
     } catch (e) {
-      Alert.alert('登录失败', '邮箱或密码错误');
+      Alert.alert('Login Failed', 'Incorrect email or password');
     } finally {
       setLoading(false);
     }
@@ -32,11 +32,11 @@ export default function LoginScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SOIN</Text>
-      <Text style={styles.subtitle}>欢迎回来</Text>
+      <Text style={styles.subtitle}>Welcome back</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="邮箱"
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -44,18 +44,18 @@ export default function LoginScreen({ navigation }: any) {
       />
       <TextInput
         style={styles.input}
-        placeholder="密码"
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>登录</Text>}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Log In</Text>}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>没有账号？立即注册</Text>
+        <Text style={styles.link}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );

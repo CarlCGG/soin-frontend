@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -21,6 +22,7 @@ import BusinessesScreen from './src/screens/BusinessesScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import ResourcesScreen from './src/screens/ResourcesScreen';
 import SharedAssetsScreen from './src/screens/SharedAssetsScreen';
+import UserProfileScreen from './src/screens/UserProfileScreen';
 
 const Stack = createStackNavigator();
 const DRAWER_WIDTH = 260;
@@ -59,7 +61,6 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
     { icon: '📊', label: 'Analytics', screen: 'Analytics' },
     { icon: '📚', label: 'Resources', screen: 'Resources' },
     { icon: '📦', label: 'Shared Assets', screen: 'SharedAssets' },
-    
   ];
 
   return (
@@ -137,13 +138,12 @@ function MainApp() {
   const CurrentComponent = SCREENS[currentScreen];
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <DrawerMenu
         visible={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onNavigate={(screen) => setCurrentScreen(screen)}
       />
-      {/* 顶部导航栏 */}
       <View style={{
         backgroundColor: '#6B21A8', paddingTop: 16, paddingBottom: 12,
         paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center',
@@ -155,7 +155,6 @@ function MainApp() {
           {TITLES[currentScreen]}
         </Text>
       </View>
-      {/* 当前页面 */}
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="CurrentScreen">
           {() => <CurrentComponent />}
@@ -166,19 +165,23 @@ function MainApp() {
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Group' }} />
         <Stack.Screen name="Chat" component={ChatScreen}
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Chat' }} />
+        <Stack.Screen name="UserProfile" component={UserProfileScreen}
+          options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Profile' }} />
       </Stack.Navigator>
-    </View>
+    </SafeAreaView>
   );
 }
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="MainApp" component={MainApp} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="MainApp" component={MainApp} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }

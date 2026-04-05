@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Modal, Image } from 'react-native';
 import { assetsAPI } from '../services/api';
+import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '../store';
 
 const EQUIPMENT_CATEGORIES = ['Home appliances', 'Electronics', 'Sport equipments', 'Tools', 'Furniture', 'Other'];
@@ -106,21 +107,16 @@ export default function SharedAssetsScreen() {
   const [imageUrl, setImageUrl] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
 
-  const handlePickImage = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e: any) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event: any) => {
-        setImageUrl(event.target.result);
-      };
-      reader.readAsDataURL(file);
-    };
-    input.click();
-  };
+  const handlePickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+  });
+  if (!result.canceled) {
+    setImageUrl(result.assets[0].uri);
+  }
+};
 
   const user = useUser();
 
@@ -233,8 +229,8 @@ export default function SharedAssetsScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>{getModalTitle()}</Text>
             {errorMsg ? <Text style={styles.errorText}>⚠️ {errorMsg}</Text> : null}
-            <TextInput style={styles.modalInput} placeholder="Title *" value={title} onChangeText={setTitle} />
-            <TextInput style={styles.modalInput} placeholder="Description (optional)" value={description} onChangeText={setDescription} multiline />
+            <TextInput style={styles.modalInput} placeholder="Title *" placeholderTextColor="#aaa" value={title} onChangeText={setTitle} />
+            <TextInput style={styles.modalInput} placeholder="Description (optional)" placeholderTextColor="#aaa" value={description} onChangeText={setDescription} multiline />
             <TouchableOpacity
               onPress={handlePickImage}
               style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, marginBottom: 10, alignItems: 'center' }}

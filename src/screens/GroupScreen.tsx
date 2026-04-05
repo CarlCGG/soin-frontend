@@ -23,7 +23,7 @@ export default function GroupScreen({ route, navigation }: any) {
       const member = res.data.members?.some((m: any) => m.user.id === user?.id);
       setIsMember(member);
     } catch (e) {
-      Alert.alert('错误', '无法加载群组');
+      Alert.alert('Error', 'Failed to load group');
     }
   };
 
@@ -32,7 +32,7 @@ export default function GroupScreen({ route, navigation }: any) {
       const res = await groupsAPI.getMessages(groupId);
       setMessages(res.data);
     } catch (e) {
-      console.log('无法加载消息');
+      console.log('Failed to load messages');
     }
   };
 
@@ -42,7 +42,7 @@ export default function GroupScreen({ route, navigation }: any) {
       setIsMember(res.data.joined);
       loadGroup();
     } catch (e) {
-      Alert.alert('错误', '操作失败');
+      Alert.alert('Error', 'Action failed');
     }
   };
 
@@ -54,7 +54,7 @@ export default function GroupScreen({ route, navigation }: any) {
       setContent('');
       loadMessages();
     } catch (e) {
-      Alert.alert('错误', '发送失败');
+      Alert.alert('Error', 'Failed to send message');
     } finally {
       setLoading(false);
     }
@@ -63,43 +63,34 @@ export default function GroupScreen({ route, navigation }: any) {
   useEffect(() => {
     loadGroup();
     loadMessages();
-    
-    // every 3s refresh
-    const interval = setInterval(() => {
-        loadMessages();
-    }, 3000);
-
+    const interval = setInterval(() => { loadMessages(); }, 3000);
     return () => clearInterval(interval);
-    }, []);
+  }, []);
 
   if (!group) return <ActivityIndicator style={{ flex: 1 }} color="#6B21A8" />;
 
   return (
     <View style={styles.container}>
-      {/* 群组头部 */}
       <View style={styles.groupHeader}>
         <View style={styles.groupAvatar}>
-          <Text style={styles.groupAvatarText}>
-            {group.name.charAt(0).toUpperCase()}
-          </Text>
+          <Text style={styles.groupAvatarText}>{group.name.charAt(0).toUpperCase()}</Text>
         </View>
         <View style={styles.groupInfo}>
           <Text style={styles.groupName}>{group.name}</Text>
           <Text style={styles.groupCategory}>{group.category}</Text>
           <Text style={styles.groupLocation}>📍 {group.location}</Text>
-          <Text style={styles.groupMembers}>👥 {group._count?.members || 0} 位成员</Text>
+          <Text style={styles.groupMembers}>👥 {group._count?.members || 0} members</Text>
         </View>
         <TouchableOpacity
           style={[styles.joinButton, isMember && styles.leaveButton]}
           onPress={handleJoin}
         >
           <Text style={[styles.joinButtonText, isMember && styles.leaveButtonText]}>
-            {isMember ? '退出' : '+ 加入'}
+            {isMember ? 'Leave' : '+ Join'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 消息列表 */}
       {isMember ? (
         <>
           <FlatList
@@ -109,7 +100,7 @@ export default function GroupScreen({ route, navigation }: any) {
             style={styles.messageList}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
             ListEmptyComponent={
-              <Text style={styles.emptyText}>暂无消息，来发第一条消息吧！</Text>
+              <Text style={styles.emptyText}>No messages yet. Be the first to send one!</Text>
             }
             renderItem={({ item }) => {
               const isMe = item.author.id === user?.id;
@@ -117,18 +108,12 @@ export default function GroupScreen({ route, navigation }: any) {
                 <View style={[styles.messageRow, isMe && styles.myMessageRow]}>
                   {!isMe && (
                     <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>
-                        {item.author.username.charAt(0).toUpperCase()}
-                      </Text>
+                      <Text style={styles.avatarText}>{item.author.username.charAt(0).toUpperCase()}</Text>
                     </View>
                   )}
                   <View style={[styles.messageBubble, isMe && styles.myMessageBubble]}>
-                    {!isMe && (
-                      <Text style={styles.messageAuthor}>{item.author.username}</Text>
-                    )}
-                    <Text style={[styles.messageContent, isMe && styles.myMessageContent]}>
-                      {item.content}
-                    </Text>
+                    {!isMe && <Text style={styles.messageAuthor}>{item.author.username}</Text>}
+                    <Text style={[styles.messageContent, isMe && styles.myMessageContent]}>{item.content}</Text>
                     <Text style={[styles.messageTime, isMe && styles.myMessageTime]}>
                       {new Date(item.createdAt).toLocaleTimeString()}
                     </Text>
@@ -137,12 +122,10 @@ export default function GroupScreen({ route, navigation }: any) {
               );
             }}
           />
-
-          {/* 输入框 */}
           <View style={styles.inputBox}>
             <TextInput
               style={styles.input}
-              placeholder="发送消息..."
+              placeholder="Send a message..."
               value={content}
               onChangeText={setContent}
               multiline
@@ -150,16 +133,16 @@ export default function GroupScreen({ route, navigation }: any) {
             <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={loading}>
               {loading
                 ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={styles.sendButtonText}>发送</Text>
+                : <Text style={styles.sendButtonText}>Send</Text>
               }
             </TouchableOpacity>
           </View>
         </>
       ) : (
         <View style={styles.joinPrompt}>
-          <Text style={styles.joinPromptText}>加入群组后才能查看和发送消息</Text>
+          <Text style={styles.joinPromptText}>Join this group to view and send messages</Text>
           <TouchableOpacity style={styles.joinPromptButton} onPress={handleJoin}>
-            <Text style={styles.joinPromptButtonText}>+ 加入群组</Text>
+            <Text style={styles.joinPromptButtonText}>+ Join Group</Text>
           </TouchableOpacity>
         </View>
       )}
