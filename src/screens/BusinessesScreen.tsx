@@ -70,9 +70,9 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 16 },
   errorText: { color: 'red', fontSize: 13, marginBottom: 10 },
   modalInput: {
-    borderWidth: 1, borderColor: '#eee', borderRadius: 12,
-    padding: 12, fontSize: 14, marginBottom: 10,
-  },
+  borderWidth: 1, borderColor: '#eee', borderRadius: 12,
+  padding: 12, fontSize: 14, marginBottom: 10, color: '#333',
+},
   categoryLabel: { color: '#888', fontSize: 13, marginBottom: 6 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   categoryChip: {
@@ -188,12 +188,12 @@ export default function BusinessesScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Create Business</Text>
             {errorMsg ? <Text style={styles.errorText}>⚠️ {errorMsg}</Text> : null}
-            <TextInput style={styles.modalInput} placeholder="Business name *" value={name} onChangeText={setName} />
-            <TextInput style={styles.modalInput} placeholder="Description" value={description} onChangeText={setDescription} multiline />
-            <TextInput style={styles.modalInput} placeholder="Location *" value={location} onChangeText={setLocation} />
-            <TextInput style={styles.modalInput} placeholder="Website (optional)" value={website} onChangeText={setWebsite} />
-            <TextInput style={styles.modalInput} placeholder="Phone (optional)" value={phone} onChangeText={setPhone} />
-            <TextInput style={styles.modalInput} placeholder="Email (optional)" value={email} onChangeText={setEmail} />
+            <TextInput style={styles.modalInput} placeholder="Business name *" placeholderTextColor="#aaa" value={name} onChangeText={setName} />
+            <TextInput style={styles.modalInput} placeholder="Description" placeholderTextColor="#aaa" value={description} onChangeText={setDescription} multiline />
+            <TextInput style={styles.modalInput} placeholder="Location *" placeholderTextColor="#aaa" value={location} onChangeText={setLocation} />
+            <TextInput style={styles.modalInput} placeholder="Website (optional)" placeholderTextColor="#aaa" value={website} onChangeText={setWebsite} />
+            <TextInput style={styles.modalInput} placeholder="Phone (optional)" placeholderTextColor="#aaa" value={phone} onChangeText={setPhone} />
+            <TextInput style={styles.modalInput} placeholder="Email (optional)" placeholderTextColor="#aaa" value={email} onChangeText={setEmail} />
             <Text style={styles.categoryLabel}>Category *</Text>
             <View style={styles.categoryRow}>
               {CATEGORIES.map(cat => (

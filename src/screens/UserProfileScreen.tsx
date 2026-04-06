@@ -105,10 +105,10 @@ export default function UserProfileScreen() {
     };
 
     const getConnButton = () => {
-    if (connStatus === 'accepted') return { label: '+ Connect', bg: '#F97316', disabled: false };
     if (connStatus === 'pending') return { label: '⏳ Pending', bg: '#888', disabled: true };
-    return { label: '+ Connect', bg: '#F97316', disabled: false };
-    };
+    if (connStatus === 'none') return { label: '+ Connect', bg: '#F97316', disabled: false };
+    return null;
+  };
 
     const btn = getConnButton();
 
@@ -137,24 +137,26 @@ export default function UserProfileScreen() {
           </View>
         </View>
         {String(userId) !== String(currentUser?.id) && (
-    <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-        <TouchableOpacity
-        style={[styles.connectButton, { backgroundColor: btn.bg }]}
-        onPress={handleConnect}
-        disabled={btn.disabled}
-        >
-        <Text style={[styles.connectButtonText, { color: '#fff' }]}>{btn.label}</Text>
-        </TouchableOpacity>
-        {connStatus === 'accepted' && (
-        <TouchableOpacity
-            style={[styles.connectButton, { backgroundColor: '#ff4444' }]}
-            onPress={handleRemove}
-        >
-            <Text style={[styles.connectButtonText, { color: '#fff' }]}>Remove</Text>
-        </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+            {btn && (
+              <TouchableOpacity
+                style={[styles.connectButton, { backgroundColor: btn.bg }]}
+                onPress={handleConnect}
+                disabled={btn.disabled}
+              >
+                <Text style={[styles.connectButtonText, { color: '#fff' }]}>{btn.label}</Text>
+              </TouchableOpacity>
+            )}
+            {connStatus === 'accepted' && (
+              <TouchableOpacity
+                style={[styles.connectButton, { backgroundColor: '#ff4444' }]}
+                onPress={handleRemove}
+              >
+                <Text style={[styles.connectButtonText, { color: '#fff' }]}>Remove</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
-    </View>
-    )}
       </View>
 
       <View style={styles.card}>

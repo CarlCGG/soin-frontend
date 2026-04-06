@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -68,11 +68,15 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
       <View style={drawerStyles.overlay}>
         <View style={drawerStyles.drawer}>
           <View style={drawerStyles.userSection}>
-            <View style={drawerStyles.avatar}>
-              <Text style={drawerStyles.avatarText}>
-                {user?.username?.charAt(0).toUpperCase() || 'U'}
-              </Text>
-            </View>
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={{ width: 64, height: 64, borderRadius: 32 }} />
+            ) : (
+              <View style={drawerStyles.avatar}>
+                <Text style={drawerStyles.avatarText}>
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </Text>
+              </View>
+            )}
             <Text style={drawerStyles.username}>{user?.username || 'User'}</Text>
             <Text style={drawerStyles.handle}>@{user?.username || 'user'}</Text>
           </View>
@@ -135,6 +139,7 @@ const TITLES: any = {
 function MainApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('Feed');
+  const [inSubScreen, setInSubScreen] = useState(false);
   const CurrentComponent = SCREENS[currentScreen];
 
   return (
@@ -148,14 +153,24 @@ function MainApp() {
         backgroundColor: '#6B21A8', paddingTop: 16, paddingBottom: 12,
         paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center',
       }}>
-        <TouchableOpacity onPress={() => setDrawerOpen(true)}>
-          <Text style={{ fontSize: 24, color: '#fff' }}>☰</Text>
-        </TouchableOpacity>
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: 16 }}>
+        {!inSubScreen && (
+          <TouchableOpacity onPress={() => setDrawerOpen(true)}>
+            <Text style={{ fontSize: 24, color: '#fff' }}>☰</Text>
+          </TouchableOpacity>
+        )}
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: inSubScreen ? 0 : 16 }}>
           {TITLES[currentScreen]}
         </Text>
       </View>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        screenListeners={{
+          state: (e) => {
+            const routes = (e.data as any).state?.routes;
+            if (routes) setInSubScreen(routes.length > 1);
+          }
+        }}
+      >
         <Stack.Screen name="CurrentScreen">
           {() => <CurrentComponent />}
         </Stack.Screen>

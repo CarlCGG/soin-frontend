@@ -64,13 +64,24 @@ export const groupsAPI = {
   getMessages: (id: number) => api.get(`/groups/${id}/messages`),
   sendMessage: (id: number, content: string) =>
     api.post(`/groups/${id}/messages`, { content }),
+  getSuggested: () => api.get('/groups/suggested/for-me'),
+  getPosts: (id: number) => api.get(`/groups/${id}/posts`),
+  createPost: (id: number, content: string, imageUrl?: string) =>
+  api.post(`/groups/${id}/posts`, { content, imageUrl }),
+  getReviews: (id: number) => api.get(`/groups/${id}/reviews`),
+  createReview: (id: number, rating: number, comment?: string) =>
+    api.post(`/groups/${id}/reviews`, { rating, comment }),
+  updateDescription: (id: number, description: string) =>
+  api.put(`/groups/${id}/description`, { description }),
+  deletePost: (groupId: number, postId: number) =>
+    api.delete(`/groups/${groupId}/posts/${postId}`),
 };
 
 export const aiAPI = {
   generatePost: (prompt: string) =>
     api.post('/ai/generate-post', { prompt }),
-  chat: (messages: { role: string; content: string }[]) =>
-    api.post('/ai/chat', { messages }),
+  chat: (messages: { role: string; content: string }[], systemContext?: string) =>
+  api.post('/ai/chat', { messages, systemContext }),
   suggestComment: (postContent: string) =>
     api.post('/ai/suggest-comment', { postContent }),
 };
@@ -132,4 +143,6 @@ export const usersAPI = {
   updateProfile: (data: any) => api.put('/users/profile', data),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/users/change-password', { currentPassword, newPassword }),
+  getSimilarUsers: () => api.get('/users/similar'),
 };
+

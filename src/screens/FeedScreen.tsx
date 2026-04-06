@@ -141,6 +141,7 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [groups, setGroups] = useState<any[]>([]);
+  const [hasTags, setHasTags] = useState(true);
   const [aiPrompt, setAiPrompt] = useState('');
   const [visibility, setVisibility] = useState('everyone');
   const [showVisibility, setShowVisibility] = useState(false);
@@ -160,8 +161,9 @@ export default function FeedScreen() {
 
   const loadGroups = async () => {
     try {
-      const res = await groupsAPI.getAll();
-      setGroups(res.data);
+      const res = await groupsAPI.getSuggested();
+      setGroups(res.data.groups);
+      setHasTags(res.data.hasTags);
     } catch (e) {
       console.log('Failed to load groups');
     }
@@ -224,14 +226,14 @@ export default function FeedScreen() {
   };
 
   useEffect(() => {
-  loadPosts();
-  loadGroups();
-  const interval = setInterval(() => {
     loadPosts();
     loadGroups();
-  }, 5000);
-  return () => clearInterval(interval);
-}, []);
+    const interval = setInterval(() => {
+      loadPosts();
+      loadGroups();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isLiked = (post: any) => {
     return post.likes?.some((like: any) => like.userId === user?.id);
@@ -257,26 +259,52 @@ export default function FeedScreen() {
           <View>
             <View style={styles.suggestedGroups}>
               <Text style={styles.suggestedTitle}>Suggested Groups</Text>
-              {groups.slice(0, 4).map((group) => (
-                <View key={group.id} style={styles.groupItem}>
-                  <View style={styles.groupAvatar}>
-                    <Text style={styles.groupAvatarText}>{group.name.charAt(0).toUpperCase()}</Text>
-                  </View>
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
-                    <Text style={styles.groupCategory}>{group.category}</Text>
-                    <Text style={styles.groupLocation}>{group.location}</Text>
-                  </View>
+              {!hasTags ? (
+                <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                  <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center', marginBottom: 12 }}>
+                    No suggested groups yet. Add your interests in your profile to get recommendations!
+                  </Text>
                   <TouchableOpacity
-                    style={[styles.joinButton, group.members?.some((m: any) => m.userId === user?.id) && { borderColor: '#22c55e' }]}
-                    onPress={() => navigation.navigate('Group', { groupId: group.id })}
+                    style={{ backgroundColor: '#6B21A8', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 20 }}
+                    onPress={() => navigation.navigate('GroupHub')}
                   >
-                    <Text style={[styles.joinButtonText, group.members?.some((m: any) => m.userId === user?.id) && { color: '#22c55e' }]}>
-                      {group.members?.some((m: any) => m.userId === user?.id) ? '✓ Joined' : '+ Join'}
-                    </Text>
+                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>+ Create a Group</Text>
                   </TouchableOpacity>
                 </View>
-              ))}
+              ) : groups.length === 0 ? (
+                <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+                  <Text style={{ color: '#aaa', fontSize: 14, textAlign: 'center', marginBottom: 12 }}>
+                    No matching groups found for your interests. Why not create one?
+                  </Text>
+                  <TouchableOpacity
+                    style={{ backgroundColor: '#6B21A8', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 20 }}
+                    onPress={() => navigation.navigate('GroupHub')}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>+ Create a Group</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                groups.slice(0, 4).map((group) => (
+                  <View key={group.id} style={styles.groupItem}>
+                    <View style={styles.groupAvatar}>
+                      <Text style={styles.groupAvatarText}>{group.name.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.groupInfo}>
+                      <Text style={styles.groupName}>{group.name}</Text>
+                      <Text style={styles.groupCategory}>{group.category}</Text>
+                      <Text style={styles.groupLocation}>{group.location}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.joinButton, group.members?.some((m: any) => m.userId === user?.id) && { borderColor: '#22c55e' }]}
+                      onPress={() => navigation.navigate('Group', { groupId: group.id })}
+                    >
+                      <Text style={[styles.joinButtonText, group.members?.some((m: any) => m.userId === user?.id) && { color: '#22c55e' }]}>
+                        {group.members?.some((m: any) => m.userId === user?.id) ? '✓ Joined' : '+ Join'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
             </View>
 
             <View style={styles.quoteCard}>
@@ -289,9 +317,13 @@ export default function FeedScreen() {
 
             <View style={styles.postBox}>
               <View style={styles.postBoxHeader}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{user?.username?.charAt(0).toUpperCase() || 'U'}</Text>
-                </View>
+                {user?.avatar ? (
+                  <Image source={{ uri: user.avatar }} style={{ width: 42, height: 42, borderRadius: 21 }} />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{user?.username?.charAt(0).toUpperCase() || 'U'}</Text>
+                  </View>
+                )}
                 <Text style={styles.postBoxName}>{user?.username || 'User'}</Text>
               </View>
               {showAiInput && (
@@ -364,11 +396,15 @@ export default function FeedScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.post}>
-            <View style={styles.postHeader}>
+        <View style={styles.post}>
+          <View style={styles.postHeader}>
+            {item.author.avatar ? (
+              <Image source={{ uri: item.author.avatar }} style={{ width: 42, height: 42, borderRadius: 21 }} />
+            ) : (
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{item.author.username.charAt(0).toUpperCase()}</Text>
               </View>
+            )}
               <View>
                 <Text style={styles.username}>{item.author.username}</Text>
                 <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>

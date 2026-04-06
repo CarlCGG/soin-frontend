@@ -6,7 +6,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { api, postsAPI, usersAPI } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useUser } from '../store';
+import { useUser, setUser } from '../store';
 import { useNavigation } from '@react-navigation/native';
 
 const styles = StyleSheet.create({
@@ -81,11 +81,11 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 13, color: '#666', marginBottom: 4, fontWeight: '600' },
   editInput: {
     borderWidth: 1, borderColor: '#eee', borderRadius: 12,
-    padding: 12, fontSize: 14, marginBottom: 12,
+    padding: 12, fontSize: 14, marginBottom: 12, color: '#333',
   },
   editInputMulti: {
     borderWidth: 1, borderColor: '#eee', borderRadius: 12,
-    padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: 'top', marginBottom: 12,
+    padding: 12, fontSize: 14, minHeight: 80, textAlignVertical: 'top', marginBottom: 12, color: '#333',
   },
   editActions: { flexDirection: 'row', gap: 8, marginTop: 4 },
   saveButton: {
@@ -125,6 +125,13 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: '#6B21A8', borderColor: '#6B21A8' },
   chipText: { color: '#666', fontSize: 13 },
   chipTextActive: { color: '#fff' },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  tag: {
+    backgroundColor: '#f3f0f8', borderRadius: 20,
+    paddingVertical: 4, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: '#6B21A8',
+  },
+  tagText: { color: '#6B21A8', fontSize: 12 },
 });
 
 export default function ProfileScreen() {
@@ -138,6 +145,7 @@ export default function ProfileScreen() {
 
   const [editUsername, setEditUsername] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editTags, setEditTags] = useState('');
   const [editGender, setEditGender] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editBirthYear, setEditBirthYear] = useState('');
@@ -156,6 +164,7 @@ export default function ProfileScreen() {
       const res = await api.get('/users/profile');
       setProfile(res.data);
       setEditBio(res.data.bio || '');
+      setEditTags(res.data.tags || '');
       setEditUsername(res.data.username || '');
       setEditGender(res.data.gender || '');
       setEditLocation(res.data.location || '');
@@ -176,13 +185,16 @@ export default function ProfileScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.8,
+      quality: 0.5,
+      base64: true,
     });
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setAvatarUri(uri);
+      const asset = result.assets[0];
+      const base64 = `data:image/jpeg;base64,${asset.base64}`;
+      setAvatarUri(base64);
       try {
-        await usersAPI.updateProfile({ avatar: uri });
+        await usersAPI.updateProfile({ avatar: base64 });
+        setUser({ ...user, avatar: base64 });
         loadProfile();
         Alert.alert('Success', 'Profile photo updated!');
       } catch (e) {
@@ -191,14 +203,13 @@ export default function ProfileScreen() {
     }
   };
 
- const handleSavePersonal = async () => {
-  try {
-    const payload = {
-      bio: editBio, username: editUsername, gender: editGender,
-      location: editLocation, birthYear: editBirthYear, ethnicity: editEthnicity,
-    };
-    console.log('Saving:', payload);
-    await usersAPI.updateProfile(payload);
+  const handleSavePersonal = async () => {
+    try {
+      await usersAPI.updateProfile({
+        bio: editBio, username: editUsername, gender: editGender,
+        location: editLocation, birthYear: editBirthYear, ethnicity: editEthnicity,
+        tags: editTags,
+      });
       setEditing(false);
       loadProfile();
       Alert.alert('Success', 'Profile updated!');
@@ -273,9 +284,7 @@ export default function ProfileScreen() {
           <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
         ) : (
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {profile?.username?.charAt(0).toUpperCase() || 'U'}
-            </Text>
+            <Text style={styles.avatarText}>{profile?.username?.charAt(0).toUpperCase() || 'U'}</Text>
           </View>
         )}
         <TouchableOpacity style={styles.changePhotoButton} onPress={handlePickAvatar}>
@@ -303,7 +312,6 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Profile Completion */}
       <View style={styles.completionCard}>
         <Text style={styles.completionTitle}>Profile Completion</Text>
         <View style={styles.completionRow}>
@@ -328,7 +336,6 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Edit Box */}
       {editing && (
         <View style={styles.editBox}>
           <View style={styles.editTabRow}>
@@ -351,7 +358,7 @@ export default function ProfileScreen() {
             <View>
               <Text style={styles.editTitle}>Personal Information</Text>
               <Text style={styles.fieldLabel}>Username</Text>
-              <TextInput style={styles.editInput} value={editUsername} onChangeText={setEditUsername} placeholder="Username" />
+              <TextInput style={styles.editInput} value={editUsername} onChangeText={setEditUsername} placeholder="Username" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>Gender</Text>
               <View style={styles.chipRow}>
                 {['Male', 'Female', 'Non-binary', 'Other'].map(g => (
@@ -365,9 +372,9 @@ export default function ProfileScreen() {
                 ))}
               </View>
               <Text style={styles.fieldLabel}>Location (City/District)</Text>
-              <TextInput style={styles.editInput} value={editLocation} onChangeText={setEditLocation} placeholder="e.g. Liverpool, United Kingdom" />
+              <TextInput style={styles.editInput} value={editLocation} onChangeText={setEditLocation} placeholder="e.g. Liverpool, United Kingdom" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>Birth month & year</Text>
-              <TextInput style={styles.editInput} value={editBirthYear} onChangeText={setEditBirthYear} placeholder="e.g. July 2003" />
+              <TextInput style={styles.editInput} value={editBirthYear} onChangeText={setEditBirthYear} placeholder="e.g. July 2003" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>Ethnicity</Text>
               <View style={styles.chipRow}>
                 {['Asian', 'Black', 'Mixed', 'White', 'Other'].map(e => (
@@ -381,7 +388,15 @@ export default function ProfileScreen() {
                 ))}
               </View>
               <Text style={styles.fieldLabel}>About me</Text>
-              <TextInput style={styles.editInputMulti} value={editBio} onChangeText={setEditBio} placeholder="Tell people about yourself..." multiline />
+              <TextInput style={styles.editInputMulti} value={editBio} onChangeText={setEditBio} placeholder="Tell people about yourself..." placeholderTextColor="#aaa" multiline />
+              <Text style={styles.fieldLabel}>My Interests (comma separated)</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editTags}
+                onChangeText={setEditTags}
+                placeholder="e.g. football, technology, music"
+                placeholderTextColor="#aaa"
+              />
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSavePersonal}>
                   <Text style={styles.saveButtonText}>Submit</Text>
@@ -397,11 +412,11 @@ export default function ProfileScreen() {
             <View>
               <Text style={styles.editTitle}>Change Password</Text>
               <Text style={styles.fieldLabel}>Current Password</Text>
-              <TextInput style={styles.editInput} value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry placeholder="Current password" />
+              <TextInput style={styles.editInput} value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry placeholder="Current password" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>New Password</Text>
-              <TextInput style={styles.editInput} value={newPassword} onChangeText={setNewPassword} secureTextEntry placeholder="New password" />
+              <TextInput style={styles.editInput} value={newPassword} onChangeText={setNewPassword} secureTextEntry placeholder="New password" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>Verify Password</Text>
-              <TextInput style={styles.editInput} value={verifyPassword} onChangeText={setVerifyPassword} secureTextEntry placeholder="Verify new password" />
+              <TextInput style={styles.editInput} value={verifyPassword} onChangeText={setVerifyPassword} secureTextEntry placeholder="Verify new password" placeholderTextColor="#aaa" />
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleChangePassword}>
                   <Text style={styles.saveButtonText}>Submit</Text>
@@ -417,11 +432,11 @@ export default function ProfileScreen() {
             <View>
               <Text style={styles.editTitle}>Manage Contact</Text>
               <Text style={styles.fieldLabel}>Phone Number</Text>
-              <TextInput style={styles.editInput} value={editPhone} onChangeText={setEditPhone} placeholder="Phone number" keyboardType="phone-pad" />
+              <TextInput style={styles.editInput} value={editPhone} onChangeText={setEditPhone} placeholder="Phone number" placeholderTextColor="#aaa" keyboardType="phone-pad" />
               <Text style={styles.fieldLabel}>Email</Text>
               <TextInput value={profile?.email} editable={false} style={[styles.editInput, { backgroundColor: '#f3f0f8', color: '#aaa' }]} />
               <Text style={styles.fieldLabel}>Website URL</Text>
-              <TextInput style={styles.editInput} value={editWebsite} onChangeText={setEditWebsite} placeholder="https://..." />
+              <TextInput style={styles.editInput} value={editWebsite} onChangeText={setEditWebsite} placeholder="https://..." placeholderTextColor="#aaa" />
               <View style={styles.editActions}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSaveContact}>
                   <Text style={styles.saveButtonText}>Submit</Text>
@@ -435,7 +450,6 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      {/* Tabs */}
       <View style={styles.tabContainer}>
         {[
           { key: 'about', label: 'About' },
@@ -493,6 +507,18 @@ export default function ProfileScreen() {
             <Text style={styles.infoLabel}>Joined:</Text>
             <Text style={styles.infoValue}>{profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '-'}</Text>
           </View>
+          {profile?.tags && (
+            <View>
+              <Text style={[styles.infoLabel, { marginTop: 8, marginBottom: 6 }]}>Interests:</Text>
+              <View style={styles.tagRow}>
+                {profile.tags.split(',').map((tag: string, i: number) => (
+                  <View key={i} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag.trim()}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       )}
 

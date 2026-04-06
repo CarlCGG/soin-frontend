@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   errorText: { color: 'red', fontSize: 13, marginBottom: 10 },
   modalInput: {
     borderWidth: 1, borderColor: '#eee', borderRadius: 12,
-    padding: 12, fontSize: 14, marginBottom: 10,
+    padding: 12, fontSize: 14, marginBottom: 10, color: '#333',
   },
   categoryLabel: { color: '#888', fontSize: 13, marginBottom: 6 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
@@ -163,25 +163,9 @@ export default function GroupHubScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Create New Group</Text>
             {errorMsg ? <Text style={styles.errorText}>⚠️ {errorMsg}</Text> : null}
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Group name *"
-              value={newName}
-              onChangeText={setNewName}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Description (optional)"
-              value={newDesc}
-              onChangeText={setNewDesc}
-              multiline
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Location (e.g. London, England) *"
-              value={newLocation}
-              onChangeText={setNewLocation}
-            />
+            <TextInput style={styles.modalInput} placeholder="Group name *" placeholderTextColor="#aaa" value={newName} onChangeText={setNewName} />
+            <TextInput style={styles.modalInput} placeholder="Description (optional)" placeholderTextColor="#aaa" value={newDesc} onChangeText={setNewDesc} multiline />
+            <TextInput style={styles.modalInput} placeholder="Location (e.g. London, England) *" placeholderTextColor="#aaa" value={newLocation} onChangeText={setNewLocation} />
             <Text style={styles.categoryLabel}>Category *</Text>
             <View style={styles.categoryRow}>
               {CATEGORIES.map(cat => (
