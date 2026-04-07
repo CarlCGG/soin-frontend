@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
 import { searchAPI, connectionsAPI } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from '../store';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
@@ -50,7 +51,9 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [sentRequests, setSentRequests] = useState<Set<number>>(new Set());
   const navigation = useNavigation<any>();
+  const user = useUser();
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -65,6 +68,39 @@ export default function SearchScreen() {
     }
   };
 
+  const handleConnect = async (targetUser: any) => {
+    try {
+      await connectionsAPI.sendRequest(targetUser.id);
+      setSentRequests(prev => new Set([...prev, targetUser.id]));
+      Alert.alert('Sent', `Connection request sent to ${targetUser.username}`);
+    } catch (e) {
+      Alert.alert('Error', 'Could not send request');
+    }
+  };
+
+  const getConnectButton = (targetUser: any) => {
+    if (targetUser.id === user?.id) return null;
+    if (targetUser.connectionStatus === 'accepted') {
+      return (
+        <View style={[styles.cardAction, { borderColor: '#22c55e' }]}>
+          <Text style={[styles.cardActionText, { color: '#22c55e' }]}>✓ Connected</Text>
+        </View>
+      );
+    }
+    if (targetUser.connectionStatus === 'pending' || sentRequests.has(targetUser.id)) {
+      return (
+        <View style={[styles.cardAction, { borderColor: '#aaa' }]}>
+          <Text style={[styles.cardActionText, { color: '#aaa' }]}>⏳ Pending</Text>
+        </View>
+      );
+    }
+    return (
+      <TouchableOpacity style={styles.cardAction} onPress={() => handleConnect(targetUser)}>
+        <Text style={styles.cardActionText}>+ Connect</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const hasResults = results && (
     results.users?.length > 0 ||
     results.posts?.length > 0 ||
@@ -74,7 +110,6 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 搜索框 */}
       <View style={styles.searchBox}>
         <TextInput
           style={styles.searchInput}
@@ -101,38 +136,32 @@ export default function SearchScreen() {
 
       {!loading && results && (
         <ScrollView>
-          {/* 用户 */}
           {results.users?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>👤 Users ({results.users.length})</Text>
-             {results.users.map((user: any) => (
-              <View key={user.id} style={styles.card}>
-                <View style={styles.avatar}>
-                  <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
-                </View>
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>{user.username}</Text>
-                  {user.bio ? <Text style={styles.cardSub}>{user.bio}</Text> : null}
-                </View>
+              {results.users.map((u: any) => (
                 <TouchableOpacity
-                  style={styles.cardAction}
-                  onPress={async () => {
-                    try {
-                      await connectionsAPI.sendRequest(user.id);
-                      Alert.alert('Sent', `Connection request sent to ${user.username}`);
-                    } catch (e) {
-                      Alert.alert('Error', 'Could not send request');
-                    }
-                  }}
+                  key={u.id}
+                  style={styles.card}
+                  onPress={() => navigation.navigate('UserProfile', { userId: u.id })}
                 >
-                  <Text style={styles.cardActionText}>+ Connect</Text>
+                  {u.avatar ? (
+                    <Image source={{ uri: u.avatar }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }} />
+                  ) : (
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText}>{u.username.charAt(0).toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.cardTitle}>{u.username}</Text>
+                    {u.bio ? <Text style={styles.cardSub}>{u.bio}</Text> : null}
+                  </View>
+                  {getConnectButton(u)}
                 </TouchableOpacity>
-              </View>
-            ))}
+              ))}
             </View>
           )}
 
-          {/* 帖子 */}
           {results.posts?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>📝 Posts ({results.posts.length})</Text>
@@ -158,7 +187,6 @@ export default function SearchScreen() {
             </View>
           )}
 
-          {/* 群组 */}
           {results.groups?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>👥 Groups ({results.groups.length})</Text>
@@ -184,7 +212,6 @@ export default function SearchScreen() {
             </View>
           )}
 
-          {/* 活动 */}
           {results.events?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>📅 Events ({results.events.length})</Text>

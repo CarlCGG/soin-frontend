@@ -165,19 +165,15 @@ export default function EventsScreen() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Create New Event</Text>
             {errorMsg ? <Text style={styles.errorText}>⚠️ {errorMsg}</Text> : null}
-            <TextInput style={styles.modalInput} placeholder="Event title *" value={title} onChangeText={setTitle} />
-            <TextInput style={styles.modalInput} placeholder="Description (optional)" value={description} onChangeText={setDescription} multiline />
-            <TextInput style={styles.modalInput} placeholder="Location *" value={location} onChangeText={setLocation} />
-            <input
-              type="datetime-local"
+           <TextInput style={[styles.modalInput, { color: '#333' }]} placeholder="Event title *" placeholderTextColor="#aaa" value={title} onChangeText={setTitle} />
+           <TextInput style={[styles.modalInput, { color: '#333' }]} placeholder="Description (optional)" placeholderTextColor="#aaa" value={description} onChangeText={setDescription} multiline />
+           <TextInput style={[styles.modalInput, { color: '#333' }]} placeholder="Location *" placeholderTextColor="#aaa" value={location} onChangeText={setLocation} />
+            <TextInput
+              style={[styles.modalInput, { color: '#333' }]}
+              placeholder="Date & Time (e.g. 2026-04-10 18:00) *"
+              placeholderTextColor="#aaa"
               value={date}
-              onChange={(e: any) => setDate(e.target.value)}
-              style={{
-                border: '1px solid #eee', borderRadius: 12,
-                padding: 12, fontSize: 14, marginBottom: 10,
-                width: '100%', boxSizing: 'border-box',
-                fontFamily: 'inherit',
-              }}
+              onChangeText={setDate}
             />
             <Text style={styles.categoryLabel}>Category *</Text>
             <View style={styles.categoryRow}>

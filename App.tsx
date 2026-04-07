@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
@@ -15,6 +15,7 @@ import GroupScreen from './src/screens/GroupScreen';
 import AiChatScreen from './src/screens/AiChatScreen';
 import GroupHubScreen from './src/screens/GroupHubScreen';
 import { useUser } from './src/store';
+import { api } from './src/services/api';
 import EventsScreen from './src/screens/EventsScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -48,6 +49,20 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
   onNavigate: (screen: string) => void;
 }) {
   const user = useUser();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const loadUnread = async () => {
+      try {
+        const res = await api.get('/notifications/unread-count');
+        setUnreadCount(res.data.count || 0);
+      } catch (e) {}
+    };
+    loadUnread();
+    const interval = setInterval(loadUnread, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const menuItems = [
     { icon: '🏠', label: 'Feed', screen: 'Feed' },
     { icon: '🔍', label: 'Search', screen: 'Search' },
@@ -88,6 +103,11 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
             >
               <Text style={drawerStyles.menuIcon}>{item.icon}</Text>
               <Text style={drawerStyles.menuLabel}>{item.label}</Text>
+              {item.screen === 'Notifications' && unreadCount > 0 && (
+                <View style={{ backgroundColor: '#ff4444', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, marginLeft: 8 }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>{unreadCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>

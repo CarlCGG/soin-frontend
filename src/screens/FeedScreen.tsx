@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, RefreshControl,
-  Image, Modal, Dimensions, Share
+  Image, Modal, Dimensions, Share, ScrollView
 } from 'react-native';
 import { postsAPI, groupsAPI } from '../services/api';
 import * as ImagePicker from 'expo-image-picker';
 import { useUser } from '../store';
 import { useNavigation } from '@react-navigation/native';
 import { aiAPI } from '../services/api';
+
+const CATEGORIES = ['Sports & Leisure', 'Education & Training', 'Health & Wellbeing', 'Business & Finance', 'Arts & Culture', 'Technology'];
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
@@ -147,6 +149,13 @@ export default function FeedScreen() {
   const [showVisibility, setShowVisibility] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAiInput, setShowAiInput] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [newGroupCategory, setNewGroupCategory] = useState('');
+  const [newGroupLocation, setNewGroupLocation] = useState('');
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [groupError, setGroupError] = useState('');
   const user = useUser();
   const navigation = useNavigation<any>();
 
@@ -219,6 +228,28 @@ export default function FeedScreen() {
     }
   };
 
+  const handleCreateGroup = async () => {
+    if (!newGroupName || !newGroupCategory || !newGroupLocation) {
+      setGroupError('Please fill in group name, location and select a category.');
+      return;
+    }
+    setGroupError('');
+    setCreatingGroup(true);
+    try {
+      await groupsAPI.create(newGroupName, newGroupDesc, newGroupCategory, newGroupLocation);
+      setShowCreateGroup(false);
+      setNewGroupName('');
+      setNewGroupDesc('');
+      setNewGroupCategory('');
+      setNewGroupLocation('');
+      loadGroups();
+    } catch (e) {
+      setGroupError('Failed to create group. Please try again.');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadPosts();
@@ -241,6 +272,7 @@ export default function FeedScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Image Preview Modal */}
       <Modal visible={!!previewImage} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setPreviewImage(null)}>
           <Image source={{ uri: previewImage || '' }} style={styles.modalImage} resizeMode="contain" />
@@ -248,6 +280,57 @@ export default function FeedScreen() {
             <Text style={styles.closeButtonText}>✕ Close</Text>
           </TouchableOpacity>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Create Group Modal */}
+      <Modal visible={showCreateGroup} transparent animationType="slide">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 24, width: '100%' }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 16 }}>Create New Group</Text>
+            {groupError ? <Text style={{ color: 'red', fontSize: 13, marginBottom: 10 }}>⚠️ {groupError}</Text> : null}
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, fontSize: 14, marginBottom: 10, color: '#333' }}
+              placeholder="Group name *" placeholderTextColor="#aaa"
+              value={newGroupName} onChangeText={setNewGroupName}
+            />
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, fontSize: 14, marginBottom: 10, color: '#333' }}
+              placeholder="Description (optional)" placeholderTextColor="#aaa"
+              value={newGroupDesc} onChangeText={setNewGroupDesc} multiline
+            />
+            <TextInput
+              style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, fontSize: 14, marginBottom: 10, color: '#333' }}
+              placeholder="Location (e.g. London, England) *" placeholderTextColor="#aaa"
+              value={newGroupLocation} onChangeText={setNewGroupLocation}
+            />
+            <Text style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>Category *</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => setNewGroupCategory(cat)}
+                  style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: newGroupCategory === cat ? '#6B21A8' : '#f3f0f8', borderWidth: 1, borderColor: newGroupCategory === cat ? '#6B21A8' : '#ddd' }}
+                >
+                  <Text style={{ color: newGroupCategory === cat ? '#fff' : '#666', fontSize: 12 }}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#6B21A8', borderRadius: 12, paddingVertical: 12, alignItems: 'center' }}
+                onPress={handleCreateGroup} disabled={creatingGroup}
+              >
+                {creatingGroup ? <ActivityIndicator color="#fff" size="small" /> : <Text style={{ color: '#fff', fontWeight: 'bold' }}>Create</Text>}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#f3f0f8', borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#ddd' }}
+                onPress={() => { setShowCreateGroup(false); setGroupError(''); }}
+              >
+                <Text style={{ color: '#666', fontWeight: 'bold' }}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
       </Modal>
 
       <FlatList
@@ -266,7 +349,7 @@ export default function FeedScreen() {
                   </Text>
                   <TouchableOpacity
                     style={{ backgroundColor: '#6B21A8', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 20 }}
-                    onPress={() => navigation.navigate('GroupHub')}
+                    onPress={() => setShowCreateGroup(true)}
                   >
                     <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>+ Create a Group</Text>
                   </TouchableOpacity>
@@ -278,7 +361,7 @@ export default function FeedScreen() {
                   </Text>
                   <TouchableOpacity
                     style={{ backgroundColor: '#6B21A8', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 20 }}
-                    onPress={() => navigation.navigate('GroupHub')}
+                    onPress={() => setShowCreateGroup(true)}
                   >
                     <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>+ Create a Group</Text>
                   </TouchableOpacity>
@@ -368,8 +451,7 @@ export default function FeedScreen() {
                     <TouchableOpacity
                       key={opt.key}
                       onPress={() => { setVisibility(opt.key); setShowVisibility(false); }}
-                      style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8,
-                        backgroundColor: visibility === opt.key ? '#6B21A8' : 'transparent' }}
+                      style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, backgroundColor: visibility === opt.key ? '#6B21A8' : 'transparent' }}
                     >
                       <Text style={{ color: visibility === opt.key ? '#fff' : '#333', fontWeight: '600' }}>
                         {opt.label}
@@ -396,15 +478,15 @@ export default function FeedScreen() {
           </View>
         }
         renderItem={({ item }) => (
-        <View style={styles.post}>
-          <View style={styles.postHeader}>
-            {item.author.avatar ? (
-              <Image source={{ uri: item.author.avatar }} style={{ width: 42, height: 42, borderRadius: 21 }} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.author.username.charAt(0).toUpperCase()}</Text>
-              </View>
-            )}
+          <View style={styles.post}>
+            <View style={styles.postHeader}>
+              {item.author.avatar ? (
+                <Image source={{ uri: item.author.avatar }} style={{ width: 42, height: 42, borderRadius: 21 }} />
+              ) : (
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{item.author.username.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
               <View>
                 <Text style={styles.username}>{item.author.username}</Text>
                 <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
