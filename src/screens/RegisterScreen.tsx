@@ -10,21 +10,42 @@ export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'form' | 'verify'>('form');
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async () => {
+  const handleSendCode = async () => {
     if (!email || !username || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     setLoading(true);
     try {
-      const res = await authAPI.register(email, username, password);
+      await authAPI.sendCode(email, username, password);
+      setStep('verify');
+      Alert.alert('Code Sent', `A verification code has been sent to ${email}`);
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || 'This email or username is already taken';
+      Alert.alert('Error', msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!code) {
+      Alert.alert('Error', 'Please enter the verification code');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await authAPI.register(email, code);
       setAuthToken(res.data.token);
       setUser(res.data.user);
-      navigation.replace('Main');
-    } catch (e) {
-      Alert.alert('Registration Failed', 'This email or username is already taken');
+      navigation.replace('MainApp');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || 'Invalid or expired code';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -33,34 +54,59 @@ export default function RegisterScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>SOIN</Text>
-      <Text style={styles.subtitle}>Create an account</Text>
+      <Text style={styles.subtitle}>
+        {step === 'form' ? 'Create an account' : 'Enter verification code'}
+      </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
-      </TouchableOpacity>
+      {step === 'form' ? (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Verification Code</Text>}
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <Text style={{ color: '#888', textAlign: 'center', marginBottom: 16 }}>
+            We sent a code to {email}
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter 6-digit code"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleVerify} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify & Sign Up</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setStep('form')} style={{ marginBottom: 12 }}>
+            <Text style={styles.link}>← Go back</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
         <Text style={styles.link}>Already have an account? Log in</Text>

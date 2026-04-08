@@ -97,8 +97,9 @@ const styles = StyleSheet.create({
 });
 
 export default function BusinessesScreen() {
-  const [activeTab, setActiveTab] = useState<'discover' | 'my'>('discover');
+  const [activeTab, setActiveTab] = useState<'discover' | 'connections' | 'my'>('discover');
   const [businesses, setBusinesses] = useState<any[]>([]);
+  const [connectionsBusinesses, setConnectionsBusinesses] = useState<any[]>([]); // 新增
   const [myBusinesses, setMyBusinesses] = useState<any[]>([]);
   const [expandedBusiness, setExpandedBusiness] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -117,12 +118,14 @@ export default function BusinessesScreen() {
 
   const loadData = async () => {
     try {
-      const [allRes, myRes] = await Promise.all([
-        businessesAPI.getAll(),
-        businessesAPI.getMy(),
-      ]);
+      const [allRes, myRes, connRes] = await Promise.all([
+      businessesAPI.getAll(),
+      businessesAPI.getMy(),
+      businessesAPI.getConnections(), // 新增接口调用
+    ]);
       setBusinesses(allRes.data);
       setMyBusinesses(myRes.data);
+      setConnectionsBusinesses(connRes.data);
     } catch (e) {
       console.log('Failed to load businesses');
     } finally {
@@ -177,6 +180,8 @@ export default function BusinessesScreen() {
         b.name.toLowerCase().includes(search.toLowerCase()) ||
         b.category?.toLowerCase().includes(search.toLowerCase())
       )
+    : activeTab === 'connections'
+    ? connectionsBusinesses.filter(b => b.name.toLowerCase().includes(search.toLowerCase())) 
     : myBusinesses;
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color="#6B21A8" />;
@@ -226,6 +231,11 @@ export default function BusinessesScreen() {
         <TouchableOpacity style={[styles.tab, activeTab === 'discover' && styles.activeTab]} onPress={() => setActiveTab('discover')}>
           <Text style={[styles.tabText, activeTab === 'discover' && styles.activeTabText]}>Discover</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.tab, activeTab === 'connections' && styles.activeTab]} onPress={() => setActiveTab('connections')}>
+          <Text style={[styles.tabText, activeTab === 'connections' && styles.activeTabText]}>Connections</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={[styles.tab, activeTab === 'my' && styles.activeTab]} onPress={() => setActiveTab('my')}>
           <Text style={[styles.tabText, activeTab === 'my' && styles.activeTabText]}>My Businesses</Text>
         </TouchableOpacity>

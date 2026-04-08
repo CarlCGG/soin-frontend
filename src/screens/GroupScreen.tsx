@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { groupsAPI } from '../services/api';
 import { useUser } from '../store';
 
-export default function GroupScreen({ route }: any) {
+export default function GroupScreen({ route, navigation }: any) {
   const { groupId } = route.params;
   const [group, setGroup] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
@@ -122,6 +122,9 @@ export default function GroupScreen({ route }: any) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 12 }}>
+          <Text style={{ color: '#fff', fontSize: 22 }}>←</Text>
+        </TouchableOpacity>
         <View style={styles.groupAvatar}>
           <Text style={styles.groupAvatarText}>{group.name.charAt(0).toUpperCase()}</Text>
         </View>

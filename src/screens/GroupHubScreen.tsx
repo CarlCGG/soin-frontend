@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Modal, ScrollView
 } from 'react-native';
-import { groupsAPI, api } from '../services/api';
+import { groupsAPI } from '../services/api';
 import { useUser } from '../store';
 import { useNavigation } from '@react-navigation/native';
 
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   searchBox: {
     backgroundColor: '#fff', marginHorizontal: 12, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 10, fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 12, color: '#333',
   },
   groupCard: {
     backgroundColor: '#fff', marginHorizontal: 12, marginBottom: 8,
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6, paddingHorizontal: 14,
   },
   viewButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-  emptyText: { textAlign: 'center', color: '#fff', marginTop: 32, fontSize: 14 },
+  emptyText: { textAlign: 'center', color: '#fff', marginTop: 32, fontSize: 14, paddingHorizontal: 24 },
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 16,
@@ -68,9 +68,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20,
     backgroundColor: '#f3f0f8', borderWidth: 1, borderColor: '#ddd',
   },
-  categoryChipActive: {
-    backgroundColor: '#6B21A8', borderColor: '#6B21A8',
-  },
+  categoryChipActive: { backgroundColor: '#6B21A8', borderColor: '#6B21A8' },
   categoryChipText: { color: '#666', fontSize: 12 },
   categoryChipTextActive: { color: '#fff' },
   modalActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
@@ -92,6 +90,8 @@ const CATEGORIES = ['Sports & Leisure', 'Education & Training', 'Health & Wellbe
 export default function GroupHubScreen() {
   const [activeTab, setActiveTab] = useState<'my' | 'suggested' | 'joined'>('my');
   const [groups, setGroups] = useState<any[]>([]);
+  const [suggestedGroups, setSuggestedGroups] = useState<any[]>([]);
+  const [hasTags, setHasTags] = useState(true);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -102,11 +102,17 @@ export default function GroupHubScreen() {
   const [newLocation, setNewLocation] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const navigation = useNavigation<any>();
+  const user = useUser();
 
   const loadData = async () => {
     try {
-      const res = await groupsAPI.getAll();
-      setGroups(res.data);
+      const [allRes, suggestedRes] = await Promise.all([
+        groupsAPI.getAll(),
+        groupsAPI.getSuggested(),
+      ]);
+      setGroups(allRes.data);
+      setSuggestedGroups(suggestedRes.data.groups || []);
+      setHasTags(suggestedRes.data.hasTags);
     } catch (e) {
       console.log('Failed to load groups');
     } finally {
@@ -147,7 +153,16 @@ export default function GroupHubScreen() {
 
   useEffect(() => { loadData(); }, []);
 
-  const filteredGroups = groups.filter(g =>
+  const getTabGroups = () => {
+    if (activeTab === 'suggested') return suggestedGroups;
+    if (activeTab === 'my') return groups.filter((g: any) => g.creatorId === user?.id);
+    if (activeTab === 'joined') return groups.filter((g: any) =>
+      g.members?.some((m: any) => m.userId === user?.id)
+    );
+    return groups;
+  };
+
+  const filteredGroups = getTabGroups().filter((g: any) =>
     g.name.toLowerCase().includes(search.toLowerCase()) ||
     g.category?.toLowerCase().includes(search.toLowerCase()) ||
     g.location?.toLowerCase().includes(search.toLowerCase())
@@ -157,7 +172,6 @@ export default function GroupHubScreen() {
 
   return (
     <View style={styles.container}>
-      {/* 创建群组弹窗 */}
       <Modal visible={showCreate} transparent animationType="slide">
         <ScrollView contentContainerStyle={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -182,10 +196,7 @@ export default function GroupHubScreen() {
             </View>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalSave} onPress={handleCreate} disabled={creating}>
-                {creating
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.modalSaveText}>Create</Text>
-                }
+                {creating ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.modalSaveText}>Create</Text>}
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalCancel} onPress={handleCloseModal}>
                 <Text style={styles.modalCancelText}>Cancel</Text>
@@ -195,12 +206,10 @@ export default function GroupHubScreen() {
         </ScrollView>
       </Modal>
 
-      {/* 创建按钮 */}
       <TouchableOpacity style={styles.createButton} onPress={() => setShowCreate(true)}>
         <Text style={styles.createButtonText}>+ Create Group</Text>
       </TouchableOpacity>
 
-      {/* 标签 */}
       <View style={styles.tabContainer}>
         {(['my', 'suggested', 'joined'] as const).map(tab => (
           <TouchableOpacity
@@ -215,19 +224,24 @@ export default function GroupHubScreen() {
         ))}
       </View>
 
-      {/* 搜索 */}
       <TextInput
         style={styles.searchBox}
         placeholder="Search groups..."
+        placeholderTextColor="#aaa"
         value={search}
         onChangeText={setSearch}
       />
 
-      {/* 群组列表 */}
       <FlatList
         data={filteredGroups}
         keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={<Text style={styles.emptyText}>No groups found</Text>}
+        ListEmptyComponent={
+          activeTab === 'suggested' && !hasTags ? (
+            <Text style={styles.emptyText}>Add interests in your profile to get group suggestions!</Text>
+          ) : (
+            <Text style={styles.emptyText}>No groups found</Text>
+          )
+        }
         renderItem={({ item }) => (
           <View style={styles.groupCard}>
             <View style={styles.groupAvatar}>
@@ -239,25 +253,25 @@ export default function GroupHubScreen() {
               <Text style={styles.groupLocation}>{item.location}</Text>
               <Text style={styles.groupMembers}>👥 {item._count?.members || 0} members</Text>
             </View>
-             <View style={{ gap: 6 }}>
+            <View style={{ gap: 6 }}>
+              <TouchableOpacity
+                style={styles.viewButton}
+                onPress={() => navigation.navigate('Group', { groupId: item.id })}
+              >
+                <Text style={styles.viewButtonText}>View</Text>
+              </TouchableOpacity>
+              {item._count?.members === 0 && (
                 <TouchableOpacity
-                    style={styles.viewButton}
-                    onPress={() => navigation.navigate('Group', { groupId: item.id })}
+                  style={{ backgroundColor: '#ff4444', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, alignItems: 'center' }}
+                  onPress={async () => {
+                    await groupsAPI.delete(item.id);
+                    loadData();
+                  }}
                 >
-                    <Text style={styles.viewButtonText}>View</Text>
+                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
                 </TouchableOpacity>
-                {item._count?.members === 0 && (
-                    <TouchableOpacity
-                    style={{ backgroundColor: '#ff4444', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, alignItems: 'center' }}
-                    onPress={async () => {
-                        await groupsAPI.delete(item.id);
-                        loadData();
-                    }}
-                    >
-                    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
-                    </TouchableOpacity>
-                )}
-                </View>
+              )}
+            </View>
           </View>
         )}
       />

@@ -25,10 +25,16 @@ export const clearAuthToken = () => {
 };
 
 export const authAPI = {
-  register: (email: string, username: string, password: string) =>
-    api.post('/auth/register', { email, username, password }),
+  sendCode: (email: string, username: string, password: string) =>
+    api.post('/auth/send-code', { email, username, password }),
+  register: (email: string, code: string) =>
+    api.post('/auth/register', { email, code }),
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+  sendResetCode: (email: string) =>
+    api.post('/auth/send-reset-code', { email }),
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    api.post('/auth/reset-password', { email, code, newPassword }),
 };
 
 export const postsAPI = {
@@ -67,14 +73,16 @@ export const groupsAPI = {
   getSuggested: () => api.get('/groups/suggested/for-me'),
   getPosts: (id: number) => api.get(`/groups/${id}/posts`),
   createPost: (id: number, content: string, imageUrl?: string) =>
-  api.post(`/groups/${id}/posts`, { content, imageUrl }),
+    api.post(`/groups/${id}/posts`, { content, imageUrl }),
   getReviews: (id: number) => api.get(`/groups/${id}/reviews`),
   createReview: (id: number, rating: number, comment?: string) =>
     api.post(`/groups/${id}/reviews`, { rating, comment }),
   updateDescription: (id: number, description: string) =>
-  api.put(`/groups/${id}/description`, { description }),
+    api.put(`/groups/${id}/description`, { description }),
   deletePost: (groupId: number, postId: number) =>
     api.delete(`/groups/${groupId}/posts/${postId}`),
+  // ✅ 新增
+  getMyGroups: () => api.get('/groups/my'),
 };
 
 export const aiAPI = {
@@ -92,6 +100,7 @@ export const eventsAPI = {
   create: (data: any) => api.post('/events', data),
   attend: (id: number) => api.post(`/events/${id}/attend`),
   delete: (id: number) => api.delete(`/events/${id}`),
+  checkIn: (id: number) => api.post(`/events/${id}/checkin`),
 };
 
 export const searchAPI = {
@@ -107,6 +116,9 @@ export const notificationsAPI = {
 export const businessesAPI = {
   getAll: () => api.get('/businesses'),
   getMy: () => api.get('/businesses/my'),
+  
+  getConnections: () => api.get('/businesses/connections'), 
+  
   create: (data: any) => api.post('/businesses', data),
   follow: (id: number) => api.post(`/businesses/${id}/follow`),
   delete: (id: number) => api.delete(`/businesses/${id}`),
@@ -127,6 +139,7 @@ export const assetsAPI = {
   getMy: () => api.get('/assets/my'),
   create: (data: any) => api.post('/assets', data),
   delete: (id: number) => api.delete(`/assets/${id}`),
+  update: (id: number, data: any) => api.put(`/assets/${id}`, data), 
 };
 
 export const connectionsAPI = {
@@ -145,4 +158,17 @@ export const usersAPI = {
     api.put('/users/change-password', { currentPassword, newPassword }),
   getSimilarUsers: () => api.get('/users/similar'),
 };
+
+export const smartGoalsAPI = {
+  getAll: () => api.get('/smartgoals'),
+  create: (data: any) => api.post('/smartgoals', data),
+  update: (id: number, data: any) => api.put(`/smartgoals/${id}`, data),
+  togglePause: (id: number) => api.patch(`/smartgoals/${id}/pause`),
+  checkIn: (id: number) => api.post(`/smartgoals/${id}/checkin`),
+  delete: (id: number) => api.delete(`/smartgoals/${id}`),
+};
+
+
+
+
 

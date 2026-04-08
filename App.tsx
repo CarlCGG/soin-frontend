@@ -24,6 +24,7 @@ import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import ResourcesScreen from './src/screens/ResourcesScreen';
 import SharedAssetsScreen from './src/screens/SharedAssetsScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
+import EventDetailScreen from './src/screens/EventDetailScreen';   // ← 新增
 
 const Stack = createStackNavigator();
 const DRAWER_WIDTH = 260;
@@ -197,11 +198,13 @@ function MainApp() {
         <Stack.Screen name="Comments" component={CommentsScreen}
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Comments' }} />
         <Stack.Screen name="Group" component={GroupScreen}
-          options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Group' }} />
+          options={{ headerShown: false }} />
         <Stack.Screen name="Chat" component={ChatScreen}
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Chat' }} />
         <Stack.Screen name="UserProfile" component={UserProfileScreen}
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Profile' }} />
+        <Stack.Screen name="EventDetail" component={EventDetailScreen}
+          options={{ headerShown: false }} />                       
       </Stack.Navigator>
     </SafeAreaView>
   );
