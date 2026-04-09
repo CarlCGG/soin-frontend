@@ -186,9 +186,10 @@ export default function FeedScreen() {
       setContent('');
       setSelectedImage(null);
       loadPosts();
-    } catch (e) {
-      Alert.alert('Error', 'Failed to create post');
-    } finally {
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || 'Failed to create post';
+      Alert.alert('Post Rejected', msg);
+    }finally {
       setLoading(false);
     }
   };

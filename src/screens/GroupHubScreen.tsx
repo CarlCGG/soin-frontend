@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
 const CATEGORIES = ['Sports & Leisure', 'Education & Training', 'Health & Wellbeing', 'Business & Finance', 'Arts & Culture', 'Technology'];
 
 export default function GroupHubScreen() {
-  const [activeTab, setActiveTab] = useState<'my' | 'suggested' | 'joined'>('my');
+  const [activeTab, setActiveTab] = useState<'my' | 'suggested' | 'joined' | 'ai'>('my');
   const [groups, setGroups] = useState<any[]>([]);
   const [suggestedGroups, setSuggestedGroups] = useState<any[]>([]);
   const [hasTags, setHasTags] = useState(true);
@@ -101,6 +101,8 @@ export default function GroupHubScreen() {
   const [newCategory, setNewCategory] = useState('');
   const [newLocation, setNewLocation] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<any>({ joinSuggestions: [], newGroupSuggestions: [] });
+  const [loadingAI, setLoadingAI] = useState(false);
   const navigation = useNavigation<any>();
   const user = useUser();
 
@@ -117,6 +119,18 @@ export default function GroupHubScreen() {
       console.log('Failed to load groups');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAISuggestions = async () => {
+    setLoadingAI(true);
+    try {
+      const res = await groupsAPI.getAISuggested();
+      setAiSuggestions(res.data);
+    } catch (e) {
+      console.log('Failed to load AI suggestions');
+    } finally {
+      setLoadingAI(false);
     }
   };
 
@@ -211,17 +225,20 @@ export default function GroupHubScreen() {
       </TouchableOpacity>
 
       <View style={styles.tabContainer}>
-        {(['my', 'suggested', 'joined'] as const).map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-              {tab === 'my' ? 'My Groups' : tab === 'suggested' ? 'Suggested' : 'Joined'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+          {(['my', 'suggested', 'joined', 'ai'] as const).map(tab => (
+    <TouchableOpacity
+      key={tab}
+      style={[styles.tab, activeTab === tab && styles.activeTab]}
+      onPress={() => {
+        setActiveTab(tab);
+        if (tab === 'ai') loadAISuggestions();
+      }}
+    >
+      <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+        {tab === 'my' ? 'My Groups' : tab === 'suggested' ? 'Suggested' : tab === 'joined' ? 'Joined' : '🤖 AI'}
+      </Text>
+    </TouchableOpacity>
+  ))}
       </View>
 
       <TextInput
@@ -231,50 +248,109 @@ export default function GroupHubScreen() {
         value={search}
         onChangeText={setSearch}
       />
+      
+     {activeTab === 'ai' ? (
+  <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12 }}>
+    {loadingAI ? (
+      <ActivityIndicator color="#fff" style={{ marginTop: 32 }} />
+    ) : (
+      <>
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16, marginBottom: 12 }}>
+          🤖 AI Group Suggestions
+        </Text>
 
-      <FlatList
-        data={filteredGroups}
-        keyExtractor={(item) => item.id.toString()}
-        ListEmptyComponent={
-          activeTab === 'suggested' && !hasTags ? (
-            <Text style={styles.emptyText}>Add interests in your profile to get group suggestions!</Text>
-          ) : (
-            <Text style={styles.emptyText}>No groups found</Text>
-          )
-        }
-        renderItem={({ item }) => (
-          <View style={styles.groupCard}>
-            <View style={styles.groupAvatar}>
-              <Text style={styles.groupAvatarText}>{item.name.charAt(0).toUpperCase()}</Text>
-            </View>
-            <View style={styles.groupInfo}>
-              <Text style={styles.groupName}>{item.name}</Text>
-              <Text style={styles.groupCategory}>{item.category}</Text>
-              <Text style={styles.groupLocation}>{item.location}</Text>
-              <Text style={styles.groupMembers}>👥 {item._count?.members || 0} members</Text>
-            </View>
-            <View style={{ gap: 6 }}>
-              <TouchableOpacity
-                style={styles.viewButton}
-                onPress={() => navigation.navigate('Group', { groupId: item.id })}
-              >
-                <Text style={styles.viewButtonText}>View</Text>
-              </TouchableOpacity>
-              {item._count?.members === 0 && (
-                <TouchableOpacity
-                  style={{ backgroundColor: '#ff4444', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, alignItems: 'center' }}
-                  onPress={async () => {
-                    await groupsAPI.delete(item.id);
-                    loadData();
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
+        <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 8 }}>
+          Groups you should join:
+        </Text>
+        {aiSuggestions.joinSuggestions?.length === 0 && (
+          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 16 }}>No suggestions yet.</Text>
         )}
-      />
+        {aiSuggestions.joinSuggestions?.map((s: any, i: number) => (
+          <View key={i} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 10 }}>
+            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 15 }}>{s.name}</Text>
+            <Text style={{ color: '#6B21A8', fontSize: 12, marginTop: 4 }}>🤖 {s.reason}</Text>
+            {s.group && (
+              <TouchableOpacity
+                style={{ backgroundColor: '#6B21A8', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, alignSelf: 'flex-start', marginTop: 10 }}
+                onPress={() => navigation.navigate('Group', { groupId: s.group.id })}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>View Group</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+
+        <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 8, marginTop: 8 }}>
+          New groups AI thinks you should create:
+        </Text>
+        {aiSuggestions.newGroupSuggestions?.length === 0 && (
+          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>No suggestions yet.</Text>
+        )}
+        {aiSuggestions.newGroupSuggestions?.map((s: any, i: number) => (
+          <View key={i} style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 10 }}>
+            <Text style={{ fontWeight: 'bold', color: '#333', fontSize: 15 }}>{s.name}</Text>
+            <Text style={{ color: '#F97316', fontSize: 12, marginTop: 2 }}>{s.category}</Text>
+            <Text style={{ color: '#6B21A8', fontSize: 12, marginTop: 4 }}>🤖 {s.reason}</Text>
+            <TouchableOpacity
+              style={{ backgroundColor: '#F97316', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, alignSelf: 'flex-start', marginTop: 10 }}
+              onPress={() => {
+                setNewName(s.name);
+                setNewCategory(s.category);
+                setShowCreate(true);
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Create This Group</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </>
+    )}
+  </ScrollView>
+) : (
+  <FlatList
+    data={filteredGroups}
+    keyExtractor={(item) => item.id.toString()}
+    ListEmptyComponent={
+      activeTab === 'suggested' && !hasTags ? (
+        <Text style={styles.emptyText}>Add interests in your profile to get group suggestions!</Text>
+      ) : (
+        <Text style={styles.emptyText}>No groups found</Text>
+      )
+    }
+    renderItem={({ item }) => (
+      <View style={styles.groupCard}>
+        <View style={styles.groupAvatar}>
+          <Text style={styles.groupAvatarText}>{item.name.charAt(0).toUpperCase()}</Text>
+        </View>
+        <View style={styles.groupInfo}>
+          <Text style={styles.groupName}>{item.name}</Text>
+          <Text style={styles.groupCategory}>{item.category}</Text>
+          <Text style={styles.groupLocation}>{item.location}</Text>
+          <Text style={styles.groupMembers}>👥 {item._count?.members || 0} members</Text>
+        </View>
+        <View style={{ gap: 6 }}>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => navigation.navigate('Group', { groupId: item.id })}
+          >
+            <Text style={styles.viewButtonText}>View</Text>
+          </TouchableOpacity>
+          {item._count?.members === 0 && (
+            <TouchableOpacity
+              style={{ backgroundColor: '#ff4444', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, alignItems: 'center' }}
+              onPress={async () => {
+                await groupsAPI.delete(item.id);
+                loadData();
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    )}
+  />
+)}
     </View>
   );
 }

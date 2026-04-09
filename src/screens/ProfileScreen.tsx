@@ -422,13 +422,15 @@ const handleUpdateGoal = async () => {
   };
 
   const handleDelete = async (postId: number) => {
-    try {
-      await postsAPI.delete(postId);
-      loadProfile();
-    } catch (e) {
-      Alert.alert('Error', 'Delete failed');
-    }
-  };
+  try {
+    await postsAPI.delete(postId);
+    loadProfile();
+    Alert.alert('Success', 'Post deleted');
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || 'Delete failed';
+    Alert.alert('Error', msg);
+  }
+};
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('auth_token');
