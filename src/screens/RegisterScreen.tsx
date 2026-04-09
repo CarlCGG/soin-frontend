@@ -5,20 +5,32 @@ import {
   StyleSheet, Alert, ActivityIndicator
 } from 'react-native';
 import { authAPI, setAuthToken } from '../services/api';
+import { validatePassword, getPasswordStrength } from '../utils/passwordValidator';
 
 export default function RegisterScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'form' | 'verify'>('form');
   const [loading, setLoading] = useState(false);
+  
 
   const handleSendCode = async () => {
-    if (!email || !username || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
+      if (!email || !username || !password || !confirmPassword) {
+    Alert.alert('Error', 'Please fill in all fields');
+    return;
+  }
+  if (password !== confirmPassword) {
+    Alert.alert('Error', 'Passwords do not match');
+    return;
+  }
+  const { valid, errors } = validatePassword(password);
+  if (!valid) {
+    Alert.alert('Weak Password', errors.join('\n'));
+    return;
+  }
     setLoading(true);
     try {
       await authAPI.sendCode(email, username, password);
@@ -80,6 +92,27 @@ export default function RegisterScreen({ navigation }: any) {
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
+            secureTextEntry
+          />
+          {password.length > 0 && (() => {
+            const { level, color } = getPasswordStrength(password);
+            const width = level === 'weak' ? '33%' : level === 'medium' ? '66%' : '100%';
+            return (
+              <View style={{ marginBottom: 12, marginTop: -8 }}>
+                <View style={{ height: 4, backgroundColor: '#eee', borderRadius: 4, marginBottom: 4 }}>
+                  <View style={{ height: 4, width, backgroundColor: color, borderRadius: 4 }} />
+                </View>
+                <Text style={{ fontSize: 12, color, fontWeight: '600' }}>
+                  {level === 'weak' ? ' Weak' : level === 'medium' ? ' Medium' : ' Strong'}
+                </Text>
+              </View>
+            );
+          })()}
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
             secureTextEntry
           />
           <TouchableOpacity style={styles.button} onPress={handleSendCode} disabled={loading}>

@@ -9,8 +9,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser, setUser } from '../store';
 import { useNavigation } from '@react-navigation/native';
 
+
 const HUBS = ['Sports & Leisure', 'Education & Training', 'Health & Wellbeing', 'Business & Finance', 'Arts & Culture', 'Technology'];
 const DURATION_UNITS = ['Week', 'Month', 'Year'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
@@ -150,6 +153,13 @@ const styles = StyleSheet.create({
 });
 
 export default function ProfileScreen() {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showGoalReport, setShowGoalReport] = useState(false);
+  const [showGoalDatePicker, setShowGoalDatePicker] = useState(false);
+  const [goalSelectedDate, setGoalSelectedDate] = useState(new Date());
+  const [showEditGoalDatePicker, setShowEditGoalDatePicker] = useState(false);
+  const [editGoalSelectedDate, setEditGoalSelectedDate] = useState(new Date());
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -275,7 +285,7 @@ const handleCheckIn = async () => {
     setShowCheckInModal(false);
     setCheckInGoalId(null);
     loadSmartGoals();
-    Alert.alert('✅ Great job!', 'Check-in recorded!');
+    Alert.alert(' Great job!', 'Check-in recorded!');
   } catch (e) {
     Alert.alert('Error', 'Failed to check in');
   }
@@ -348,6 +358,10 @@ const handleUpdateGoal = async () => {
   };
 
   const handleSavePersonal = async () => {
+    if (!editUsername.trim()) {
+      Alert.alert('Error', 'Username cannot be empty');
+      return;
+    }
     try {
       await usersAPI.updateProfile({
         bio: editBio, username: editUsername, gender: editGender,
@@ -357,8 +371,13 @@ const handleUpdateGoal = async () => {
       setEditing(false);
       loadProfile();
       Alert.alert('Success', 'Profile updated!');
-    } catch (e) {
-      Alert.alert('Error', 'Update failed');
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Update failed';
+      if (msg.toLowerCase().includes('username') || msg.toLowerCase().includes('taken')) {
+        Alert.alert('Username Taken', 'This username is already taken. Please choose another one.');
+      } else {
+        Alert.alert('Error', msg);
+      }
     }
   };
 
@@ -367,8 +386,16 @@ const handleUpdateGoal = async () => {
       Alert.alert('Error', 'New passwords do not match');
       return;
     }
-    if (newPassword.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (newPassword.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
+      return;
+    }
+    if (!/[a-zA-Z]/.test(newPassword)) {
+      Alert.alert('Error', 'Password must contain at least one letter');
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      Alert.alert('Error', 'Password must contain at least one number');
       return;
     }
     try {
@@ -467,13 +494,59 @@ const handleUpdateGoal = async () => {
               ))}
             </View>
             <Text style={styles.fieldLabel}>Start Date (Optional)</Text>
-            <TextInput
-              style={styles.editInput}
-              value={goalStartDate}
-              onChangeText={setGoalStartDate}
-              placeholder="e.g. 2026-04-07"
-              placeholderTextColor="#aaa"
-            />
+              <TouchableOpacity style={styles.editInput} onPress={() => setShowGoalDatePicker(!showGoalDatePicker)}>
+                <Text style={{ color: goalStartDate ? '#333' : '#aaa', fontSize: 14 }}>
+                  {goalStartDate || 'Select start date'}
+                </Text>
+              </TouchableOpacity>
+              {showGoalDatePicker && (
+                <View style={{ backgroundColor: '#f9f9f9', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#eee' }}>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Month</Text>
+                      <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                        {MONTHS.map((m, i) => (
+                          <TouchableOpacity key={m} style={{ padding: 8, backgroundColor: goalSelectedDate.getMonth() === i ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                            onPress={() => { const d = new Date(goalSelectedDate); d.setMonth(i); setGoalSelectedDate(d); }}>
+                            <Text style={{ color: goalSelectedDate.getMonth() === i ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{m}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Day</Text>
+                      <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                          <TouchableOpacity key={day} style={{ padding: 8, backgroundColor: goalSelectedDate.getDate() === day ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                            onPress={() => { const d = new Date(goalSelectedDate); d.setDate(day); setGoalSelectedDate(d); }}>
+                            <Text style={{ color: goalSelectedDate.getDate() === day ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{day}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Year</Text>
+                      <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                          <TouchableOpacity key={year} style={{ padding: 8, backgroundColor: goalSelectedDate.getFullYear() === year ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                            onPress={() => { const d = new Date(goalSelectedDate); d.setFullYear(year); setGoalSelectedDate(d); }}>
+                            <Text style={{ color: goalSelectedDate.getFullYear() === year ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{year}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  </View>
+                  <TouchableOpacity style={{ backgroundColor: '#6B21A8', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 8 }}
+                    onPress={() => {
+                      const d = goalSelectedDate;
+                      setGoalStartDate(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+                      setShowGoalDatePicker(false);
+                    }}>
+                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirm</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+<Text style={styles.fieldLabel}>Time Duration (Optional)</Text>
             <Text style={styles.fieldLabel}>Time Duration (Optional)</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
               {DURATION_UNITS.map(unit => (
@@ -509,6 +582,89 @@ const handleUpdateGoal = async () => {
         </ScrollView>
       </Modal>
 
+<Modal visible={showGoalReport} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <View style={[styles.modalBox, { maxHeight: '80%' }]}>
+      <Text style={styles.modalTitle}>SMART Goal Report for {profile?.username}</Text>
+      <ScrollView>
+        {/* Completed */}
+        <View style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Text style={{ fontSize: 18 }}>✅</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 15, color: '#333' }}>
+              Completed Goals ({smartGoals.filter(g => g.status === 'completed').length})
+            </Text>
+          </View>
+          {smartGoals.filter(g => g.status === 'completed').length === 0
+            ? <Text style={{ color: '#aaa', fontSize: 13 }}>No completed goals yet.</Text>
+            : smartGoals.filter(g => g.status === 'completed').map(g => (
+              <View key={g.id} style={{ backgroundColor: '#f0fdf4', borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#bbf7d0' }}>
+                <Text style={{ fontWeight: 'bold', color: '#333' }}>{g.description}</Text>
+                {g.hub && <Text style={{ color: '#888', fontSize: 12 }}>{g.hub}</Text>}
+              </View>
+            ))
+          }
+        </View>
+
+        <View style={{ height: 1, backgroundColor: '#eee', marginBottom: 16 }} />
+
+        {/* Ongoing */}
+        <View style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Text style={{ fontSize: 18 }}>🔄</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 15, color: '#333' }}>
+              Ongoing Goals ({smartGoals.filter(g => g.status !== 'completed' && g.status !== 'paused').length})
+            </Text>
+          </View>
+          {smartGoals.filter(g => g.status !== 'completed' && g.status !== 'paused').length === 0
+            ? <Text style={{ color: '#aaa', fontSize: 13 }}>No ongoing goals.</Text>
+            : smartGoals.filter(g => g.status !== 'completed' && g.status !== 'paused').map(g => (
+              <View key={g.id} style={{ backgroundColor: '#fafafa', borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#eee' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ fontWeight: 'bold', color: '#333' }}>{g.description}</Text>
+                  {g.hub && <Text style={{ color: '#6B21A8', fontSize: 12 }}>{g.hub}</Text>}
+                </View>
+                <Text style={{ color: '#888', fontSize: 12, marginTop: 4 }}>
+                  {g.duration ? `Timeline: ${g.duration} ${g.durationUnit}` : ''}
+                  {g.startDate ? ` | Started: ${new Date(g.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                </Text>
+              </View>
+            ))
+          }
+        </View>
+
+        <View style={{ height: 1, backgroundColor: '#eee', marginBottom: 16 }} />
+
+        {/* Paused */}
+        <View style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <Text style={{ fontSize: 18 }}>⏸️</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 15, color: '#333' }}>
+              Paused Goals ({smartGoals.filter(g => g.status === 'paused').length})
+            </Text>
+          </View>
+          {smartGoals.filter(g => g.status === 'paused').length === 0
+            ? <Text style={{ color: '#aaa', fontSize: 13 }}>No paused goals.</Text>
+            : smartGoals.filter(g => g.status === 'paused').map(g => (
+              <View key={g.id} style={{ backgroundColor: '#fefce8', borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#fde68a' }}>
+                <Text style={{ fontWeight: 'bold', color: '#333' }}>{g.description}</Text>
+                {g.hub && <Text style={{ color: '#888', fontSize: 12 }}>{g.hub}</Text>}
+              </View>
+            ))
+          }
+        </View>
+      </ScrollView>
+
+      <TouchableOpacity
+        style={{ backgroundColor: '#F97316', borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
+        onPress={() => setShowGoalReport(false)}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
       {/* Check-In Modal */}
 <Modal visible={showCheckInModal} transparent animationType="fade">
   <View style={styles.modalOverlay}>
@@ -523,7 +679,7 @@ const handleUpdateGoal = async () => {
           style={[styles.saveButton, { flex: 1, backgroundColor: '#22c55e' }]}
           onPress={handleCheckIn}
         >
-          <Text style={styles.saveButtonText}>✅ Yes, I did!</Text>
+          <Text style={styles.saveButtonText}> Yes, I did!</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.cancelButton, { flex: 1 }]}
@@ -712,7 +868,47 @@ const handleUpdateGoal = async () => {
               <Text style={styles.fieldLabel}>Location (City/District)</Text>
               <TextInput style={styles.editInput} value={editLocation} onChangeText={setEditLocation} placeholder="e.g. Liverpool, United Kingdom" placeholderTextColor="#aaa" />
               <Text style={styles.fieldLabel}>Birth month & year</Text>
-              <TextInput style={styles.editInput} value={editBirthYear} onChangeText={setEditBirthYear} placeholder="e.g. July 2003" placeholderTextColor="#aaa" />
+                <TouchableOpacity
+                  style={styles.editInput}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={{ color: editBirthYear ? '#333' : '#aaa', fontSize: 14 }}>
+                    {editBirthYear || 'Select birth month & year'}
+                  </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                  <View style={{ backgroundColor: '#f9f9f9', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#eee' }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Month</Text>
+                        <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                          {MONTHS.map((m, i) => (
+                            <TouchableOpacity key={m} style={{ padding: 8, backgroundColor: selectedDate.getMonth() === i ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                              onPress={() => { const d = new Date(selectedDate); d.setMonth(i); setSelectedDate(d); }}>
+                              <Text style={{ color: selectedDate.getMonth() === i ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{m}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Year</Text>
+                        <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                          {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                            <TouchableOpacity key={year} style={{ padding: 8, backgroundColor: selectedDate.getFullYear() === year ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                              onPress={() => { const d = new Date(selectedDate); d.setFullYear(year); setSelectedDate(d); }}>
+                              <Text style={{ color: selectedDate.getFullYear() === year ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{year}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={{ backgroundColor: '#6B21A8', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 8 }}
+                      onPress={() => { setEditBirthYear(`${MONTHS[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`); setShowDatePicker(false); }}>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirm</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               <Text style={styles.fieldLabel}>Ethnicity</Text>
               <View style={styles.chipRow}>
                 {['Asian', 'Black', 'Mixed', 'White', 'Other'].map(e => (
@@ -834,6 +1030,7 @@ const handleUpdateGoal = async () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={{ borderRadius: 24, paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1, borderColor: '#6B21A8', flexDirection: 'row', alignItems: 'center', gap: 6 }}
+        onPress={() => setShowGoalReport(true)}
       >
         <Text style={{ color: '#6B21A8', fontWeight: 'bold', fontSize: 13 }}>📊 Goal Details</Text>
       </TouchableOpacity>
@@ -906,7 +1103,7 @@ const handleUpdateGoal = async () => {
           {/* Check-in count */}
           {(goal.checkIns ?? 0) > 0 && (
             <Text style={{ textAlign: 'center', color: '#22c55e', fontSize: 12, marginBottom: 8 }}>
-              ✅ {goal.checkIns} check-in{goal.checkIns > 1 ? 's' : ''} completed
+               {goal.checkIns} check-in{goal.checkIns > 1 ? 's' : ''} completed
             </Text>
           )}
 

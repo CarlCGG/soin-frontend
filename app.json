@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "soin-frontend",
+    "name": "SOIN",
     "slug": "soin-frontend",
-    "version": "1.0.0",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,26 +11,33 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#ffffff"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.gong0001.soinfrontend"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "package": "com.soin.app",
+      "versionCode": 10,
+      "usesCleartextTraffic": true,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE"
+      ]
     },
     "extra": {
       "eas": {
         "projectId": "41ab98c9-9a9c-4afb-bc68-85c02268f90c"
       }
-    }
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

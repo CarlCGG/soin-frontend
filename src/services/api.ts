@@ -1,13 +1,26 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://172.20.10.5:3000';
+export const API_URL = 'http://8.211.193.69';
 
 export const api = axios.create({
-  baseURL: API_URL,
+  baseURL: 'http://8.211.193.69', 
+  timeout: 15000, 
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
 });
 
-// 启动时从 AsyncStorage 读取 token
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('userToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+
 AsyncStorage.getItem('auth_token').then(savedToken => {
   if (savedToken) {
     api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
@@ -81,8 +94,8 @@ export const groupsAPI = {
     api.put(`/groups/${id}/description`, { description }),
   deletePost: (groupId: number, postId: number) =>
     api.delete(`/groups/${groupId}/posts/${postId}`),
-  // ✅ 新增
   getMyGroups: () => api.get('/groups/my'),
+  getAISuggested: () => api.get('/groups/ai-suggested'),
 };
 
 export const aiAPI = {

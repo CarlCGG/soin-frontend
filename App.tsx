@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -14,8 +15,8 @@ import CommentsScreen from './src/screens/CommentsScreen';
 import GroupScreen from './src/screens/GroupScreen';
 import AiChatScreen from './src/screens/AiChatScreen';
 import GroupHubScreen from './src/screens/GroupHubScreen';
-import { useUser } from './src/store';
-import { api } from './src/services/api';
+import { useUser, setUser } from './src/store';
+import { api, setAuthToken } from './src/services/api';
 import EventsScreen from './src/screens/EventsScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
@@ -24,7 +25,7 @@ import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import ResourcesScreen from './src/screens/ResourcesScreen';
 import SharedAssetsScreen from './src/screens/SharedAssetsScreen';
 import UserProfileScreen from './src/screens/UserProfileScreen';
-import EventDetailScreen from './src/screens/EventDetailScreen';   // ← 新增
+import EventDetailScreen from './src/screens/EventDetailScreen';
 
 const Stack = createStackNavigator();
 const DRAWER_WIDTH = 260;
@@ -65,18 +66,18 @@ function DrawerMenu({ visible, onClose, onNavigate }: {
   }, []);
 
   const menuItems = [
+    { icon: '👤', label: 'My Profile', screen: 'Profile' },
     { icon: '🏠', label: 'Feed', screen: 'Feed' },
     { icon: '🔍', label: 'Search', screen: 'Search' },
     { icon: '👥', label: 'Group Hub', screen: 'GroupHub' },
     { icon: '💬', label: 'Messages', screen: 'Messages' },
     { icon: '🤖', label: 'AI Assistant', screen: 'AiChat' },
-    { icon: '👤', label: 'My Profile', screen: 'Profile' },
     { icon: '📅', label: 'Events', screen: 'Events' },
     { icon: '🔔', label: 'Notifications', screen: 'Notifications' },
     { icon: '🏢', label: 'Businesses', screen: 'Businesses' },
-    { icon: '📊', label: 'Analytics', screen: 'Analytics' },
     { icon: '📚', label: 'Resources', screen: 'Resources' },
     { icon: '📦', label: 'Shared Assets', screen: 'SharedAssets' },
+    { icon: '📊', label: 'Analytics', screen: 'Analytics' },
   ];
 
   return (
@@ -170,19 +171,19 @@ function MainApp() {
         onClose={() => setDrawerOpen(false)}
         onNavigate={(screen) => setCurrentScreen(screen)}
       />
+      {!inSubScreen && (
       <View style={{
         backgroundColor: '#6B21A8', paddingTop: 16, paddingBottom: 12,
         paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center',
       }}>
-        {!inSubScreen && (
-          <TouchableOpacity onPress={() => setDrawerOpen(true)}>
-            <Text style={{ fontSize: 24, color: '#fff' }}>☰</Text>
-          </TouchableOpacity>
-        )}
-        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: inSubScreen ? 0 : 16 }}>
+        <TouchableOpacity onPress={() => setDrawerOpen(true)}>
+          <Text style={{ fontSize: 24, color: '#fff' }}>☰</Text>
+        </TouchableOpacity>
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 18, marginLeft: 16 }}>
           {TITLES[currentScreen]}
         </Text>
       </View>
+    )}
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
         screenListeners={{
@@ -204,17 +205,50 @@ function MainApp() {
         <Stack.Screen name="UserProfile" component={UserProfileScreen}
           options={{ headerShown: true, headerStyle: { backgroundColor: '#6B21A8' }, headerTintColor: '#fff', title: 'Profile' }} />
         <Stack.Screen name="EventDetail" component={EventDetailScreen}
-          options={{ headerShown: false }} />                       
+          options={{ headerShown: false }} />
       </Stack.Navigator>
     </SafeAreaView>
   );
 }
 
 export default function App() {
+  const [initialRoute, setInitialRoute] = useState<'Login' | 'MainApp'>('Login');
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (token) {
+          setAuthToken(token);
+          const res = await api.get('/users/profile');
+          setUser(res.data);
+          setInitialRoute('MainApp');
+        }
+      } catch (e) {
+        await AsyncStorage.removeItem('auth_token');
+      } finally {
+        setChecking(false);
+      }
+    };
+    checkToken();
+  }, []);
+
+  if (checking) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#6B21A8' }}>
+          <Text style={{ color: '#fff', fontSize: 36, fontWeight: 'bold', marginBottom: 20 }}>SOIN</Text>
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="MainApp" component={MainApp} />

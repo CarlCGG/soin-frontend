@@ -22,12 +22,12 @@ export default function LoginScreen({ navigation }: any) {
     }
     setLoading(true);
     try {
-      const res = await authAPI.login(email, password);
-      setAuthToken(res.data.token);
-      setUser(res.data.user);
+      const result = await authAPI.login(email.trim().toLowerCase(), password);
+      setAuthToken(result.data.token);
+      setUser(result.data.user);
       navigation.replace('MainApp');
-    } catch (e) {
-      Alert.alert('Login Failed', 'Incorrect email or password');
+    } catch (error: any) {
+      Alert.alert('Login Failed', error?.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

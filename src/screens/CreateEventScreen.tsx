@@ -6,6 +6,8 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { eventsAPI, groupsAPI } from '../services/api';
 
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f0f8' },
   scrollContent: { padding: 16, paddingBottom: 60 },
@@ -74,6 +76,8 @@ export default function CreateEventScreen({ onBack, onCreated }: {
   const [showGroupList, setShowGroupList] = useState(false);
   const [creating, setCreating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [startSelectedDate, setStartSelectedDate] = useState(new Date());
 
   useEffect(() => {
     groupsAPI.getMyGroups().then((res: any) => {
@@ -213,13 +217,62 @@ export default function CreateEventScreen({ onBack, onCreated }: {
 
         {/* Start Date */}
         <Text style={styles.label}>Start Date</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="YYYY-MM-DD"
-          placeholderTextColor="#bbb"
-          value={startDate}
-          onChangeText={setStartDate}
-        />
+        <TouchableOpacity style={styles.input} onPress={() => setShowStartDatePicker(!showStartDatePicker)}>
+          <Text style={{ color: startDate ? '#333' : '#bbb', fontSize: 14 }}>
+            {startDate || 'Select start date'}
+          </Text>
+        </TouchableOpacity>
+        {showStartDatePicker && (
+          <View style={{ backgroundColor: '#f9f9f9', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#eee' }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Month</Text>
+                <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                  {MONTHS.map((m, i) => (
+                    <TouchableOpacity key={m}
+                      style={{ padding: 8, backgroundColor: startSelectedDate.getMonth() === i ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                      onPress={() => { const d = new Date(startSelectedDate); d.setMonth(i); setStartSelectedDate(d); }}>
+                      <Text style={{ color: startSelectedDate.getMonth() === i ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{m}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Day</Text>
+                <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <TouchableOpacity key={day}
+                      style={{ padding: 8, backgroundColor: startSelectedDate.getDate() === day ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                      onPress={() => { const d = new Date(startSelectedDate); d.setDate(day); setStartSelectedDate(d); }}>
+                      <Text style={{ color: startSelectedDate.getDate() === day ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{day}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, color: '#666', marginBottom: 4, textAlign: 'center' }}>Year</Text>
+                <ScrollView style={{ height: 140 }} nestedScrollEnabled>
+                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
+                    <TouchableOpacity key={year}
+                      style={{ padding: 8, backgroundColor: startSelectedDate.getFullYear() === year ? '#6B21A8' : '#fff', borderRadius: 6, margin: 1 }}
+                      onPress={() => { const d = new Date(startSelectedDate); d.setFullYear(year); setStartSelectedDate(d); }}>
+                      <Text style={{ color: startSelectedDate.getFullYear() === year ? '#fff' : '#333', fontSize: 11, textAlign: 'center' }}>{year}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={{ backgroundColor: '#6B21A8', borderRadius: 8, padding: 10, alignItems: 'center', marginTop: 8 }}
+              onPress={() => {
+                const d = startSelectedDate;
+                setStartDate(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+                setShowStartDatePicker(false);
+              }}>
+              <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Start / End Time */}
         <View style={styles.row}>
